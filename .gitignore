@@ -1,0 +1,20 @@
+# 1. 忽略缓存与海量数据
+cache/
+data/
+!data/dummy_train.jsonl  # 可选：如果你想保留这个微型测试集，用 ! 强制保留
+
+# 2. 忽略模型权重文件
+checkpoints/
+*.pt
+*.pth
+*.bin
+
+# 3. 忽略系统与 IDE 生成的临时文件
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+.DS_Store
+
+# 4. 忽略本地环境变量
+.env

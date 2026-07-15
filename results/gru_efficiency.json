@@ -1,0 +1,8 @@
+{
+  "head": "gru",
+  "n_trainable_params": 788225,
+  "epochs": 3,
+  "total_train_time_sec": 1189.8432879447937,
+  "peak_mem_mb": 60.883968,
+  "device": "cuda"
+}
