@@ -31,6 +31,7 @@ import argparse
 import json
 import os
 import random
+import math
 
 import torch
 
@@ -54,6 +55,10 @@ def aggregate_trajectory_score(q_values: torch.Tensor, step_mask: torch.Tensor, 
         return valid_q.mean().item()
     elif mode == "last":
         return valid_q[-1].item()
+    elif mode == "sum":
+        return valid_q.sum().item()
+    elif mode == "prod":
+        return valid_q.prod().item()
     raise ValueError(mode)
 
 
@@ -67,7 +72,7 @@ def main():
     parser.add_argument("--ks", type=int, nargs="+", default=[8, 16])
     parser.add_argument("--n_draws", type=int, default=20,
                          help="How many random k-subsets to average over, per question.")
-    parser.add_argument("--agg", default="min", choices=["min", "mean", "last"])
+    parser.add_argument("--agg", default="min", choices=["min", "mean", "last", "sum", "prod"])
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--results_dir", default=None,
                          help="If set, writes a JSON file here for summarize_results.py to pick up.")
@@ -98,13 +103,22 @@ def main():
             cand_scores, cand_correct = [], []
             for cand in q_obj["candidates"]:
                 text = q_obj["question"].strip() + "\n"
-                for s in cand["steps"]:
+                # --- 新增：兼容不同的候选数据格式 ---
+                if "steps" in cand:
+                    steps = cand["steps"]
+                else:
+                    # 如果找不到 steps，尝试提取长文本并按换行符切分
+                    raw_text = cand.get("text", cand.get("response", cand.get("content", "")))
+                    steps = [s for s in raw_text.split('\n') if s.strip()]
+                for s in steps:
                     text += s.strip() + f" {encoder.step_token}\n"
                 step_hidden, step_mask = encoder.encode_texts([text], device=device, max_length=args.max_length)
                 q_values = head(step_hidden, step_mask)[0]
                 score = aggregate_trajectory_score(q_values, step_mask[0], mode=args.agg)
                 cand_scores.append(score)
-                cand_correct.append(int(cand["final_correct"]))
+                # 使用 .get() 方法依次尝试获取可能的正确性标签，如果都找不到则默认返回 0 (False)
+                correct_val = cand.get("final_correct", cand.get("label", cand.get("is_correct", cand.get("correct", 0))))
+                cand_correct.append(int(correct_val))
             all_scores.append(cand_scores)
             all_correct.append(cand_correct)
 
