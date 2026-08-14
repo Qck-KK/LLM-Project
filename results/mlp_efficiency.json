@@ -1,8 +1,0 @@
-{
-  "head": "mlp",
-  "n_trainable_params": 262657,
-  "epochs": 3,
-  "total_train_time_sec": 724.3292970657349,
-  "peak_mem_mb": 30.690816,
-  "device": "cuda"
-}

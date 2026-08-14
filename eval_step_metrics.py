@@ -23,6 +23,7 @@ import os
 
 import torch
 
+from eval_utils import HEAD_CHOICES, get_device
 from reward_heads import build_reward_head
 
 
@@ -79,17 +80,15 @@ def qvalue_ranking_accuracy(all_q, all_labels):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache_dir", required=True,
-                         help="Cache built by precompute_embeddings.py over your VAL/TEST split.")
-    parser.add_argument("--head", required=True,
-                         choices=["linear", "mlp", "cnn", "gru", "attention"])
+                         help="Validation/test cache copied from the external precompute step.")
+    parser.add_argument("--head", required=True, choices=HEAD_CHOICES)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--results_dir", default=None,
                          help="If set, writes a JSON file here for summarize_results.py to pick up.")
     parser.add_argument("--device", default=None)
     args = parser.parse_args()
 
-    device = args.device or ("cuda" if torch.cuda.is_available() else (
-        "mps" if torch.backends.mps.is_available() else "cpu"))
+    device = get_device(args.device)
 
     with open(os.path.join(args.cache_dir, "hidden_size.txt")) as f:
         hidden_size = int(f.read().strip())

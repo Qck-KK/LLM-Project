@@ -1,22 +1,10 @@
 """
 precompute_eval_embeddings.py
 ================================
-Same idea as precompute_embeddings.py, applied to the single-candidate
-evaluation format used by eval_single.py:
+Builds a cache for single-solution final-answer evaluation.
 
-Input JSONL (one line = one question + one solution):
+Input JSONL, one solution per line:
 {"question": "...", "steps": ["step1", "step2", ...], "final_correct": 1}
-
-Runs the frozen encoder ONCE over this whole eval set and caches
-(step_hidden, step_mask, final_correct) per shard. After this,
-eval_single_from_cache.py can score EVERY head against this same cache
-without ever touching the LLM again.
-
-Usage:
-    python precompute_eval_embeddings.py \
-        --eval_file data/single_eval.jsonl \
-        --cache_dir cache/single_eval \
-        --batch_size 16
 """
 
 import argparse
@@ -27,6 +15,7 @@ import time
 import torch
 
 from encoder import FrozenStepEncoder
+from eval_utils import get_device
 
 
 def main():
@@ -40,8 +29,7 @@ def main():
     parser.add_argument("--device", default=None)
     args = parser.parse_args()
 
-    device = args.device or ("cuda" if torch.cuda.is_available() else (
-        "mps" if torch.backends.mps.is_available() else "cpu"))
+    device = get_device(args.device)
     os.makedirs(args.cache_dir, exist_ok=True)
     print(f"[precompute_eval] device={device}  cache_dir={args.cache_dir}")
 
@@ -60,8 +48,8 @@ def main():
     texts, final_correct = [], []
     for rec in records:
         text = rec["question"].strip() + "\n"
-        for s in rec["steps"]:
-            text += s.strip() + f" {encoder.step_token}\n"
+        for step in rec["steps"]:
+            text += step.strip() + f" {encoder.step_token}\n"
         texts.append(text)
         final_correct.append(int(rec["final_correct"]))
 
@@ -89,12 +77,10 @@ def main():
             n_done += len(batch_texts)
             if shard_idx % 20 == 0:
                 dt = time.time() - t0
-                print(f"[precompute_eval] shard {shard_idx}  examples_so_far={n_done}  "
-                      f"elapsed={dt/60:.1f}min")
+                print(f"[precompute_eval] shard {shard_idx}  examples_so_far={n_done}  elapsed={dt/60:.1f}min")
 
     total_min = (time.time() - t0) / 60
-    print(f"\n[precompute_eval] done: {n_done} examples -> {shard_idx + 1} shards "
-          f"in {args.cache_dir}")
+    print(f"\n[precompute_eval] done: {n_done} examples -> {shard_idx + 1} shards in {args.cache_dir}")
     print(f"[precompute_eval] total time: {total_min:.1f} min")
 
 

@@ -1,9 +1,0 @@
-{
-  "head": "gru",
-  "checkpoint": ".\\checkpoints\\gru_clean.pt",
-  "agg": "min",
-  "single_eval_accuracy": 0.6303125619888306,
-  "single_eval_threshold": NaN,
-  "single_eval_separation": 0.7111538648605347,
-  "n_solutions": 4447
-}

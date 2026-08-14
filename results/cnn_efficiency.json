@@ -1,8 +1,0 @@
-{
-  "head": "cnn",
-  "n_trainable_params": 393601,
-  "epochs": 3,
-  "total_train_time_sec": 566.0182139873505,
-  "peak_mem_mb": 42.068992,
-  "device": "cuda"
-}

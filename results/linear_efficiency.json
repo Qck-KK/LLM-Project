@@ -1,8 +1,0 @@
-{
-  "head": "linear",
-  "n_trainable_params": 897,
-  "epochs": 3,
-  "total_train_time_sec": 439.14413380622864,
-  "peak_mem_mb": 24.450048,
-  "device": "cuda"
-}

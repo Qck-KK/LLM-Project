@@ -4,7 +4,7 @@ summarize_results.py
 Scans a results directory for the JSON files produced by:
     - train_from_cache.py   (--results_dir ...)  -> {head}_efficiency.json
     - eval_step_metrics.py   (--results_dir ...)  -> {head}_step_metrics.json
-    - eval_bon.py            (--results_dir ...)  -> {head}_bon_metrics.json
+    - eval_single_from_cache.py (--results_dir ...) -> {head}_single_metrics.json
 
 and merges them (by "head" name) into ONE comparison table -- this is the
 final deliverable table from the proposal (Section 5/6): one row per
@@ -57,9 +57,10 @@ def main():
 
     columns = (
         ["head", "n_trainable_params", "total_train_time_sec", "peak_mem_mb"]
+        + ["final_train_loss", "final_eval_loss"]
         + bon_keys
-        + ["single_eval_accuracy", "single_eval_separation"]
-        + ["step_reward_accuracy", "qvalue_ranking_accuracy"]
+        + ["single_eval_accuracy", "single_eval_accuracy_std", "single_eval_separation", "single_eval_separation_std"]
+        + ["step_reward_accuracy", "step_reward_accuracy_std", "qvalue_ranking_accuracy", "qvalue_ranking_accuracy_std"]
     )
 
     rows = []
@@ -73,10 +74,16 @@ def main():
             "n_trainable_params": eff.get("n_trainable_params", step.get("n_trainable_params", "")),
             "total_train_time_sec": eff.get("total_train_time_sec", ""),
             "peak_mem_mb": eff.get("peak_mem_mb", ""),
+            "final_train_loss": eff.get("final_train_loss", ""),
+            "final_eval_loss": eff.get("final_eval_loss", ""),
             "step_reward_accuracy": step.get("step_reward_accuracy", ""),
+            "step_reward_accuracy_std": step.get("step_reward_accuracy_std", ""),
             "qvalue_ranking_accuracy": step.get("qvalue_ranking_accuracy", ""),
+            "qvalue_ranking_accuracy_std": step.get("qvalue_ranking_accuracy_std", ""),
             "single_eval_accuracy": single.get("single_eval_accuracy", ""),
+            "single_eval_accuracy_std": single.get("single_eval_accuracy_std", ""),
             "single_eval_separation": single.get("single_eval_separation", ""),
+            "single_eval_separation_std": single.get("single_eval_separation_std", ""),
         }
         for k in bon_keys:
             row[k] = bon.get(k, "")

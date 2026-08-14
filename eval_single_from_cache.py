@@ -1,8 +1,8 @@
 """
 eval_single_from_cache.py
 ============================
-Scores a trained head against embeddings precomputed by
-precompute_eval_embeddings.py. No LLM forward pass here -- only the tiny
+Scores a trained head against externally precomputed single-eval embeddings.
+No LLM forward pass here -- only the tiny
 head runs, so this is fast enough to re-run for every head in seconds.
 
 Usage:
@@ -17,55 +17,27 @@ import os
 
 import torch
 
+from eval_utils import (
+    HEAD_CHOICES,
+    aggregate_trajectory_scores,
+    best_threshold_accuracy,
+    get_device,
+    pairwise_separation,
+)
 from reward_heads import build_reward_head
-
-
-def aggregate_trajectory_score(q_values: torch.Tensor, step_mask: torch.Tensor, mode: str = "min") -> torch.Tensor:
-    """Batched version: q_values (B,S), step_mask (B,S) -> (B,) scores."""
-    masked = q_values.masked_fill(~step_mask, float("inf") if mode == "min" else 0.0)
-    if mode == "min":
-        return masked.min(dim=1).values
-    elif mode == "mean":
-        return (q_values * step_mask).sum(dim=1) / step_mask.sum(dim=1).clamp(min=1)
-    elif mode == "last":
-        lengths = step_mask.sum(dim=1).clamp(min=1) - 1
-        return q_values.gather(1, lengths.unsqueeze(1)).squeeze(1)
-    raise ValueError(mode)
-
-
-def best_threshold_accuracy(scores: torch.Tensor, labels: torch.Tensor, n_grid: int = 200):
-    lo, hi = scores.min().item(), scores.max().item()
-    best_acc, best_t = -1.0, 0.0
-    for t in torch.linspace(lo, hi, n_grid):
-        preds = (scores > t).long()
-        acc = (preds == labels).float().mean().item()
-        if acc > best_acc:
-            best_acc, best_t = acc, t.item()
-    return best_t, best_acc
-
-
-def pairwise_separation(scores: torch.Tensor, labels: torch.Tensor) -> float:
-    pos = scores[labels == 1]
-    neg = scores[labels == 0]
-    if pos.numel() == 0 or neg.numel() == 0:
-        return float("nan")
-    comp = (pos.unsqueeze(1) > neg.unsqueeze(0)).float()
-    return comp.mean().item()
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache_dir", required=True)
-    parser.add_argument("--head", required=True,
-                         choices=["linear", "mlp", "cnn", "gru", "attention"])
+    parser.add_argument("--head", required=True, choices=HEAD_CHOICES)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--agg", default="min", choices=["min", "mean", "last"])
     parser.add_argument("--results_dir", default=None)
     parser.add_argument("--device", default=None)
     args = parser.parse_args()
 
-    device = args.device or ("cuda" if torch.cuda.is_available() else (
-        "mps" if torch.backends.mps.is_available() else "cpu"))
+    device = get_device(args.device)
 
     with open(os.path.join(args.cache_dir, "hidden_size.txt")) as f:
         hidden_size = int(f.read().strip())
@@ -75,7 +47,7 @@ def main():
     head.eval()
 
     shard_paths = sorted(glob.glob(os.path.join(args.cache_dir, "shard_*.pt")))
-    assert shard_paths, f"No cached shards in {args.cache_dir}. Run precompute_eval_embeddings.py first."
+    assert shard_paths, f"No cached shards in {args.cache_dir}. Copy the precomputed single-eval cache here first."
 
     all_scores, all_labels = [], []
     with torch.no_grad():
@@ -100,7 +72,7 @@ def main():
 
 
             q_values = head(step_hidden, step_mask)
-            scores = aggregate_trajectory_score(q_values, step_mask, mode=args.agg)
+            scores = aggregate_trajectory_scores(q_values, step_mask, mode=args.agg)
 
             all_scores.append(scores.cpu())
             all_labels.append(labels.cpu())
