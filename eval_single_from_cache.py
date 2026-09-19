@@ -2,8 +2,8 @@
 eval_single_from_cache.py
 ============================
 Scores a trained head against externally precomputed single-eval embeddings.
-No LLM forward pass here -- only the tiny
-head runs, so this is fast enough to re-run for every head in seconds.
+One trajectory-level half calibrates the threshold; the other half is used for
+reported metrics. No LLM forward pass happens here.
 
 Usage:
     python eval_single_from_cache.py --cache_dir cache/single_eval \
@@ -20,9 +20,14 @@ import torch
 from eval_utils import (
     HEAD_CHOICES,
     aggregate_trajectory_scores,
+    average_precision,
+    balanced_accuracy,
     best_threshold_accuracy,
+    binary_accuracy,
+    deterministic_example_split,
     get_device,
     pairwise_separation,
+    roc_auc,
 )
 from reward_heads import build_reward_head
 
@@ -35,6 +40,8 @@ def main():
     parser.add_argument("--agg", default="min", choices=["min", "mean", "last"])
     parser.add_argument("--results_dir", default=None)
     parser.add_argument("--device", default=None)
+    parser.add_argument("--calibration_fraction", type=float, default=0.5)
+    parser.add_argument("--split_seed", type=int, default=42)
     args = parser.parse_args()
 
     device = get_device(args.device)
@@ -80,13 +87,27 @@ def main():
     scores = torch.cat(all_scores)
     labels = torch.cat(all_labels)
 
-    thr, acc = best_threshold_accuracy(scores, labels)
-    sep = pairwise_separation(scores, labels)
+    calibration_mask, test_mask = deterministic_example_split(
+        len(scores), args.calibration_fraction, args.split_seed
+    )
+    thr, calibration_acc = best_threshold_accuracy(
+        scores[calibration_mask], labels[calibration_mask]
+    )
+    test_scores, test_labels = scores[test_mask], labels[test_mask]
+    acc = binary_accuracy(test_scores, test_labels, thr)
+    balanced_acc = balanced_accuracy(test_scores, test_labels, thr)
+    auc = roc_auc(test_scores, test_labels)
+    ap = average_precision(test_scores, test_labels)
+    sep = pairwise_separation(test_scores, test_labels)
 
     print(f"\n=== {args.head} (agg={args.agg}) ===")
-    print(f"Best-threshold accuracy (threshold={thr:.3f}): {acc:.4f}")
+    print(f"Calibration accuracy (threshold={thr:.3f}): {calibration_acc:.4f}")
+    print(f"Held-out accuracy: {acc:.4f}")
+    print(f"Held-out balanced accuracy: {balanced_acc:.4f}")
+    print(f"Held-out ROC-AUC / AP: {auc:.4f} / {ap:.4f}")
     print(f"Pairwise separation P(score_correct > score_incorrect): {sep:.4f}")
-    print(f"n_solutions={len(scores)}  n_correct={int(labels.sum())}  n_incorrect={int((labels==0).sum())}")
+    print(f"n_test_solutions={len(test_scores)}  n_correct={int(test_labels.sum())}  "
+          f"n_incorrect={int((test_labels == 0).sum())}")
 
     if args.results_dir:
         os.makedirs(args.results_dir, exist_ok=True)
@@ -95,9 +116,15 @@ def main():
             "checkpoint": args.checkpoint,
             "agg": args.agg,
             "single_eval_accuracy": acc,
+            "single_eval_calibration_accuracy": calibration_acc,
             "single_eval_threshold": thr,
+            "single_eval_balanced_accuracy": balanced_acc,
+            "single_eval_roc_auc": auc,
+            "single_eval_average_precision": ap,
             "single_eval_separation": sep,
-            "n_solutions": len(scores),
+            "calibration_fraction": args.calibration_fraction,
+            "split_seed": args.split_seed,
+            "n_solutions": int(test_mask.sum()),
         }
         out_path = os.path.join(args.results_dir, f"{args.head}_single_metrics.json")
         with open(out_path, "w") as f:

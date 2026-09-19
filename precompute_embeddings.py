@@ -36,7 +36,8 @@ def main():
     os.makedirs(args.cache_dir, exist_ok=True)
     print(f"[precompute] device={device}  cache_dir={args.cache_dir}")
 
-    encoder = FrozenStepEncoder(model_name=args.model_name).to(device)
+    model_dtype = torch.float16 if args.dtype == "float16" and device != "cpu" else torch.float32
+    encoder = FrozenStepEncoder(model_name=args.model_name, dtype=model_dtype).to(device)
     encoder.eval()
     with open(os.path.join(args.cache_dir, "hidden_size.txt"), "w") as f:
         f.write(str(encoder.hidden_size))

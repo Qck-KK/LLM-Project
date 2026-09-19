@@ -67,7 +67,9 @@ class CNNHead(nn.Module):
         x = step_hidden * step_mask.unsqueeze(-1)
         x = x.transpose(1, 2)          # (B, H, S)
         x = self.act(self.conv1(x))
+        x = x * step_mask.unsqueeze(1)
         x = self.act(self.conv2(x))
+        x = x * step_mask.unsqueeze(1)
         x = x.transpose(1, 2)          # (B, S, channels)
         return self.out(x).squeeze(-1)
 

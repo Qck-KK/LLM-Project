@@ -1,8 +1,9 @@
 # Lightweight PRM Reward Head Training
 
 This repo trains lightweight reward heads on top of frozen encoder embeddings.
-The final workflow supports train/evaluation loss curves and direct comparison
-between the existing reward head and an attention reward head.
+It compares pointwise heads (`linear`, `mlp`) with contextual heads (`cnn`,
+`gru`, `attention`) and tests whether gains reflect semantic/error-boundary
+behavior rather than majority-class or step-position bias.
 
 For the full step-by-step experiment instructions, see:
 
@@ -21,6 +22,11 @@ complete_training.ipynb
 The notebook can consume caches copied from another host, or caches generated
 locally with `precompute_embeddings.py`.
 
+The final protocol uses a maximum of 10 epochs, validation-loss early stopping
+(patience 2), one fixed seed, a trajectory-level calibration/test split, and
+threshold-free metrics. Best-of-N and multi-seed training are explicitly out
+of scope because of compute constraints.
+
 ## File Layout
 
 Core experiment files:
@@ -37,8 +43,15 @@ Core experiment files:
 - `eval_step_metrics.py`: validation-cache step metrics
 - `eval_single_from_cache.py`: optional single-solution evaluation
 - `eval_coin_flip_baseline.py`: fair-coin random baseline for final comparison
+- `analyze_data_bias.py`: label audit plus majority and position-only baselines
+- `analyze_head_behavior.py`: stratified, first-error-boundary, and optional
+  deterministic perturbation analyses
 - `summarize_results.py`: writes `summary.csv` and `summary.md`
 - `eval_utils.py`: shared utility functions
+
+Install the environment with `pip install -r requirements.txt`. Follow
+`TRAINING_WORKFLOW.md` in order; it is the authoritative experiment manual.
+Run `python -m unittest discover -v` for the lightweight audit checks.
 
 Old notebooks, historical result JSON files, and unused optional experiment
 scripts were removed so the remaining project has one clear training path.

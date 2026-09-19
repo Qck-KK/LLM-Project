@@ -14,7 +14,7 @@ import os
 
 import torch
 
-from eval_utils import pairwise_separation
+from eval_utils import deterministic_example_split, pairwise_separation
 
 
 def load_step_labels(cache_dir):
@@ -101,12 +101,18 @@ def main():
     parser.add_argument("--trials", type=int, default=100)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--head_name", default="coin_flip")
+    parser.add_argument("--calibration_fraction", type=float, default=0.5)
+    parser.add_argument("--split_seed", type=int, default=42)
     args = parser.parse_args()
 
     os.makedirs(args.results_dir, exist_ok=True)
     generator = torch.Generator().manual_seed(args.seed)
 
     step_labels = load_step_labels(args.val_cache_dir)
+    _, step_test_mask = deterministic_example_split(
+        len(step_labels), args.calibration_fraction, args.split_seed
+    )
+    step_labels = step_labels[step_test_mask]
     step_accs, ranking_accs = [], []
     for _ in range(args.trials):
         step_accs.append(random_step_accuracy(step_labels, generator))
@@ -134,6 +140,8 @@ def main():
         "baseline": "fair_coin",
         "trials": args.trials,
         "seed": args.seed,
+        "split_seed": args.split_seed,
+        "calibration_fraction": args.calibration_fraction,
         "step_reward_accuracy": step_acc,
         "step_reward_accuracy_std": step_acc_std,
         "step_reward_threshold": None,
@@ -148,6 +156,10 @@ def main():
 
     if args.single_cache_dir and os.path.exists(args.single_cache_dir):
         single_labels = load_single_labels(args.single_cache_dir)
+        _, single_test_mask = deterministic_example_split(
+            len(single_labels), args.calibration_fraction, args.split_seed
+        )
+        single_labels = single_labels[single_test_mask]
         single_accs, single_seps = [], []
         for _ in range(args.trials):
             single_accs.append(random_single_accuracy(single_labels, generator))
@@ -160,6 +172,8 @@ def main():
             "baseline": "fair_coin",
             "trials": args.trials,
             "seed": args.seed,
+            "split_seed": args.split_seed,
+            "calibration_fraction": args.calibration_fraction,
             "agg": "coin_flip",
             "single_eval_accuracy": single_acc,
             "single_eval_accuracy_std": single_acc_std,

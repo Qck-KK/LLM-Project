@@ -1,12 +1,14 @@
 """
 eval_step_metrics.py
 ======================
-Two of the four "Verification Performance" metrics from the proposal:
-    - Step-level Reward Accuracy
-    - Q-value Ranking Accuracy
+Held-out step-level evaluation for a trained reward head:
+    - calibrated step accuracy and balanced accuracy
+    - threshold-free ROC-AUC and average precision
+    - within-trajectory Q-value ranking accuracy
 
-Both are computed directly from the cached embeddings (same cache used for
-training) + a trained head's weights -- no need to re-run the LLM encoder.
+Metrics are computed from cached validation embeddings and a trained head's
+weights. The split is by trajectory: one half calibrates the classification
+threshold and the other half is used for the reported metrics.
 
 Usage:
     python eval_step_metrics.py --cache_dir cache/qwen05b_val \
@@ -23,35 +25,18 @@ import os
 
 import torch
 
-from eval_utils import HEAD_CHOICES, get_device
+from eval_utils import (
+    HEAD_CHOICES,
+    average_precision,
+    balanced_accuracy,
+    best_threshold_accuracy,
+    binary_accuracy,
+    deterministic_example_split,
+    flatten_valid_steps,
+    get_device,
+    roc_auc,
+)
 from reward_heads import build_reward_head
-
-
-@torch.no_grad()
-def step_reward_accuracy(all_q, all_labels, threshold=0.0):
-    """
-    Fraction of individual steps where sign(Q - threshold) matches the label.
-    `threshold` should be tuned on a held-out split (grid search below) rather
-    than assumed to be 0 -- Q-values from a ranking loss are not naturally
-    calibrated to a 0/1 decision boundary.
-    """
-    mask = all_labels != -100
-    preds = (all_q > threshold).long()
-    correct = (preds[mask] == all_labels[mask]).float()
-    return correct.mean().item()
-
-
-@torch.no_grad()
-def best_threshold(all_q, all_labels, n_grid=200):
-    mask = all_labels != -100
-    q_valid = all_q[mask]
-    lo, hi = q_valid.min().item(), q_valid.max().item()
-    best_acc, best_t = -1.0, 0.0
-    for t in torch.linspace(lo, hi, n_grid):
-        acc = step_reward_accuracy(all_q, all_labels, threshold=t.item())
-        if acc > best_acc:
-            best_acc, best_t = acc, t.item()
-    return best_t, best_acc
 
 
 @torch.no_grad()
@@ -86,6 +71,8 @@ def main():
     parser.add_argument("--results_dir", default=None,
                          help="If set, writes a JSON file here for summarize_results.py to pick up.")
     parser.add_argument("--device", default=None)
+    parser.add_argument("--calibration_fraction", type=float, default=0.5)
+    parser.add_argument("--split_seed", type=int, default=42)
     args = parser.parse_args()
 
     device = get_device(args.device)
@@ -121,11 +108,25 @@ def main():
         torch.nn.functional.pad(t, (0, max_S - t.shape[1]), value=-100) for t in all_labels_list
     ], dim=0)
 
-    thr, acc_at_thr = best_threshold(all_q, all_labels)
-    ranking_acc = qvalue_ranking_accuracy(all_q, all_labels)
+    calibration_mask, test_mask = deterministic_example_split(
+        all_labels.shape[0], args.calibration_fraction, args.split_seed
+    )
+    calibration_q, calibration_labels = flatten_valid_steps(
+        all_q, all_labels, calibration_mask
+    )
+    test_q, test_labels = flatten_valid_steps(all_q, all_labels, test_mask)
+    thr, calibration_acc = best_threshold_accuracy(calibration_q, calibration_labels)
+    acc_at_thr = binary_accuracy(test_q, test_labels, thr)
+    balanced_acc = balanced_accuracy(test_q, test_labels, thr)
+    auc = roc_auc(test_q, test_labels)
+    ap = average_precision(test_q, test_labels)
+    ranking_acc = qvalue_ranking_accuracy(all_q[test_mask], all_labels[test_mask])
 
     print(f"\n=== {args.head} ===")
-    print(f"Step-level Reward Accuracy (best threshold={thr:.3f}): {acc_at_thr:.4f}")
+    print(f"Calibration accuracy (threshold={thr:.3f}): {calibration_acc:.4f}")
+    print(f"Held-out Step Reward Accuracy: {acc_at_thr:.4f}")
+    print(f"Held-out Balanced Accuracy: {balanced_acc:.4f}")
+    print(f"Held-out ROC-AUC / AP: {auc:.4f} / {ap:.4f}")
     print(f"Q-value Ranking Accuracy: {ranking_acc:.4f}")
 
     if args.results_dir:
@@ -135,8 +136,16 @@ def main():
             "head": args.head,
             "checkpoint": args.checkpoint,
             "step_reward_accuracy": acc_at_thr,
+            "step_reward_calibration_accuracy": calibration_acc,
             "step_reward_threshold": thr,
+            "step_balanced_accuracy": balanced_acc,
+            "step_roc_auc": auc,
+            "step_average_precision": ap,
             "qvalue_ranking_accuracy": ranking_acc,
+            "calibration_fraction": args.calibration_fraction,
+            "split_seed": args.split_seed,
+            "n_calibration_trajectories": int(calibration_mask.sum()),
+            "n_test_trajectories": int(test_mask.sum()),
             "n_trainable_params": n_params,
         }
         out_path = os.path.join(args.results_dir, f"{args.head}_step_metrics.json")

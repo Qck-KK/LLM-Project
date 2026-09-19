@@ -37,9 +37,12 @@ def pqm_loss(rewards: torch.Tensor, labels: torch.Tensor, zeta: float = 4.0) -> 
     """
     has_neg = (labels == 0).sum(-1).bool()
 
-    pos_rewards_exp = torch.where(labels == 1, rewards.exp(), torch.zeros_like(rewards))
+    # The official expression is written with exp(reward). Clamping preserves
+    # its ordering while preventing overflow from an unusually large Q-value.
+    stable_rewards = rewards.clamp(min=-50.0, max=50.0)
+    pos_rewards_exp = torch.where(labels == 1, stable_rewards.exp(), torch.zeros_like(rewards))
     neg_rewards_exp = torch.where(
-        labels == 0, (rewards + zeta).exp(), torch.zeros_like(rewards)
+        labels == 0, (stable_rewards + zeta).clamp(max=50.0).exp(), torch.zeros_like(rewards)
     ).flip(dims=[-1])
     neg_reward_sum = neg_rewards_exp.sum(-1)  # (B,)
 
@@ -60,11 +63,13 @@ def pqm_loss(rewards: torch.Tensor, labels: torch.Tensor, zeta: float = 4.0) -> 
     )
 
     labels_padded = torch.cat([has_neg[..., None], labels], dim=-1)
-    loss = (
-        torch.where(labels_padded == 1, loss, torch.zeros_like(loss)).sum(-1)
-        / torch.where(labels_padded == 1, torch.ones_like(loss), torch.zeros_like(loss)).sum(-1)
-    ).mean()
-    return loss
+    supervised = labels_padded == 1
+    counts = supervised.sum(-1)
+    per_example = torch.where(supervised, loss, torch.zeros_like(loss)).sum(-1) / counts.clamp(min=1)
+    valid_examples = counts > 0
+    if not valid_examples.any():
+        return rewards.sum() * 0.0
+    return per_example[valid_examples].mean()
 
 
 def build_labels_from_mask(step_correctness: torch.Tensor, step_mask: torch.Tensor) -> torch.Tensor:
