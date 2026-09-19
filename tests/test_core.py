@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from eval_utils import (
+from eval.eval_utils import (
     average_precision,
     best_threshold_accuracy,
     deterministic_example_split,

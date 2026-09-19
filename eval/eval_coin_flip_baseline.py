@@ -14,7 +14,7 @@ import os
 
 import torch
 
-from eval_utils import deterministic_example_split, pairwise_separation
+from eval.eval_utils import deterministic_example_split, pairwise_separation
 
 
 def load_step_labels(cache_dir):

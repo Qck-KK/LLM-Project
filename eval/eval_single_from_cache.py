@@ -6,7 +6,7 @@ One trajectory-level half calibrates the threshold; the other half is used for
 reported metrics. No LLM forward pass happens here.
 
 Usage:
-    python eval_single_from_cache.py --cache_dir cache/single_eval \
+    python -m eval.eval_single_from_cache --cache_dir cache/single_eval \
         --head mlp --checkpoint checkpoints/mlp_head.pt --results_dir results
 """
 
@@ -17,7 +17,7 @@ import os
 
 import torch
 
-from eval_utils import (
+from eval.eval_utils import (
     HEAD_CHOICES,
     aggregate_trajectory_scores,
     average_precision,

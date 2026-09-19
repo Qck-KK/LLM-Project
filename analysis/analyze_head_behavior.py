@@ -15,7 +15,7 @@ import os
 
 import torch
 
-from eval_utils import (
+from eval.eval_utils import (
     HEAD_CHOICES,
     average_precision,
     balanced_accuracy,

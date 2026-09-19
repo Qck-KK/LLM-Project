@@ -12,7 +12,7 @@ import os
 
 import torch
 
-from eval_utils import (
+from eval.eval_utils import (
     average_precision,
     balanced_accuracy,
     binary_accuracy,

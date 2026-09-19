@@ -13,7 +13,7 @@ final deliverable table from the proposal (Section 5/6): one row per
 architecture, all metrics side by side.
 
 Usage:
-    python summarize_results.py --results_dir results/ \
+    python -m eval.summarize_results --results_dir results/ \
         --out_csv results/summary.csv --out_md results/summary.md
 
 Run this any time after evaluating a new head -- it just re-scans the

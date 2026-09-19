@@ -40,14 +40,23 @@ Core experiment files:
 - `train_from_cache.py`: trains reward heads from cached embeddings
 - `reward_heads.py`: defines `linear`, `mlp`, `cnn`, `gru`, and `attention`
 - `pqm_loss.py`: PQM loss
-- `eval_step_metrics.py`: validation-cache step metrics
-- `eval_single_from_cache.py`: optional single-solution evaluation
-- `eval_coin_flip_baseline.py`: fair-coin random baseline for final comparison
-- `analyze_data_bias.py`: label audit plus majority and position-only baselines
-- `analyze_head_behavior.py`: stratified, first-error-boundary, and optional
+
+Evaluation and reporting (`eval/`):
+
+- `eval/eval_utils.py`: shared evaluation utilities
+- `eval/eval_step_metrics.py`: validation-cache step metrics
+- `eval/eval_single_from_cache.py`: optional single-solution evaluation
+- `eval/eval_coin_flip_baseline.py`: fair-coin random baseline
+- `eval/summarize_results.py`: writes `summary.csv` and `summary.md`
+
+Analysis (`analysis/`):
+
+- `analysis/analyze_data_bias.py`: label audit plus majority and position-only baselines
+- `analysis/analyze_head_behavior.py`: stratified, first-error-boundary, and optional
   deterministic perturbation analyses
-- `summarize_results.py`: writes `summary.csv` and `summary.md`
-- `eval_utils.py`: shared utility functions
+
+Evaluation and analysis scripts are run as modules from the repository root,
+for example `python -m eval.eval_step_metrics ...`.
 
 Install the environment with `pip install -r requirements.txt`. Follow
 `TRAINING_WORKFLOW.md` in order; it is the authoritative experiment manual.

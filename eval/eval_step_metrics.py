@@ -11,7 +11,7 @@ weights. The split is by trajectory: one half calibrates the classification
 threshold and the other half is used for the reported metrics.
 
 Usage:
-    python eval_step_metrics.py --cache_dir cache/qwen05b_val \
+    python -m eval.eval_step_metrics --cache_dir cache/qwen05b_val \
         --head mlp --checkpoint checkpoints/mlp_head.pt
 
 Run once per trained head, then compare the printed numbers across heads --
@@ -25,7 +25,7 @@ import os
 
 import torch
 
-from eval_utils import (
+from eval.eval_utils import (
     HEAD_CHOICES,
     average_precision,
     balanced_accuracy,

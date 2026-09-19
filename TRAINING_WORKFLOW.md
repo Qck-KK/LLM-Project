@@ -206,7 +206,7 @@ cache/single_eval/shard_*.pt            # 可选
 在比较网络之前，先确认数据中是否存在类别比例或步骤位置偏差：
 
 ```bash
-python analyze_data_bias.py \
+python -m analysis.analyze_data_bias \
   --cache_dir cache/val \
   --results_dir results \
   --position_bins 5 \
@@ -333,7 +333,7 @@ results/{head}_efficiency.json
 
 ```bash
 for head in linear mlp cnn gru attention; do
-  python eval_step_metrics.py \
+  python -m eval.eval_step_metrics \
     --cache_dir cache/val \
     --head "$head" \
     --checkpoint "checkpoints/${head}_head.pt" \
@@ -377,7 +377,7 @@ results/{head}_step_metrics.json
 
 ```bash
 for head in linear mlp cnn gru attention; do
-  python eval_single_from_cache.py \
+  python -m eval.eval_single_from_cache \
     --cache_dir cache/single_eval \
     --head "$head" \
     --checkpoint "checkpoints/${head}_head.pt" \
@@ -415,7 +415,7 @@ results/{head}_single_metrics.json
 随机 baseline 不训练模型，计算成本可以忽略：
 
 ```bash
-python eval_coin_flip_baseline.py \
+python -m eval.eval_coin_flip_baseline \
   --val_cache_dir cache/val \
   --single_cache_dir cache/single_eval \
   --results_dir results \
@@ -446,7 +446,7 @@ results/coin_flip_single_metrics.json       # 有 single cache 时
 运行核心行为分析：
 
 ```bash
-python analyze_head_behavior.py \
+python -m analysis.analyze_head_behavior \
   --cache_dir cache/val \
   --checkpoint_dir checkpoints \
   --results_dir results \
@@ -520,7 +520,7 @@ results/first_error_boundary.png
 该实验不训练模型，只增加几次 reward head 前向：
 
 ```bash
-python analyze_head_behavior.py \
+python -m analysis.analyze_head_behavior \
   --cache_dir cache/val \
   --checkpoint_dir checkpoints \
   --results_dir results \
@@ -563,7 +563,7 @@ results/perturbation_sensitivity.png
 所有实验完成后运行：
 
 ```bash
-python summarize_results.py \
+python -m eval.summarize_results \
   --results_dir results \
   --out_csv results/summary.csv \
   --out_md results/summary.md

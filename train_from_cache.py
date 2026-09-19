@@ -23,7 +23,7 @@ import time
 
 import torch
 
-from eval_utils import HEAD_CHOICES, deterministic_example_split, get_device
+from eval.eval_utils import HEAD_CHOICES, deterministic_example_split, get_device
 from reward_heads import build_reward_head
 from pqm_loss import pqm_loss
 
@@ -101,7 +101,7 @@ def main():
     parser.add_argument("--device", default=None)
     parser.add_argument("--save_path", default="checkpoints/head.pt")
     parser.add_argument("--results_dir", default=None,
-                         help="If set, writes training-efficiency JSON here for summarize_results.py.")
+                         help="If set, writes training-efficiency JSON here for eval/summarize_results.py.")
     parser.add_argument("--loss_history_path", default=None)
     parser.add_argument("--loss_plot_path", default=None)
     parser.add_argument("--seed", type=int, default=42)

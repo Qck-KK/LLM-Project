@@ -15,7 +15,7 @@ import time
 import torch
 
 from encoder import FrozenStepEncoder
-from eval_utils import get_device
+from eval.eval_utils import get_device
 
 
 def main():

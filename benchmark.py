@@ -10,7 +10,7 @@ import time
 import torch
 
 from encoder import FrozenStepEncoder
-from eval_utils import HEAD_CHOICES, get_device
+from eval.eval_utils import HEAD_CHOICES, get_device
 from pqm_loss import pqm_loss
 from reward_heads import build_reward_head
 
