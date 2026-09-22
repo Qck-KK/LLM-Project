@@ -83,6 +83,7 @@ def main():
     trajectories_with_both = int(((labels == 1).any(dim=1) & (labels == 0).any(dim=1)).sum())
 
     transitions = {"correct_to_error": 0, "error_to_correct": 0}
+    trajectory_types = {"clean": 0, "monotone_error": 0, "recovery": 0}
     first_error_positions = []
     for row, length in zip(labels, lengths.tolist()):
         sequence = row[:length]
@@ -91,7 +92,14 @@ def main():
             transitions["error_to_correct"] += int(((sequence[:-1] == 0) & (sequence[1:] == 1)).sum())
         errors = (sequence == 0).nonzero(as_tuple=True)[0]
         if errors.numel():
-            first_error_positions.append(errors[0].item() / max(length - 1, 1))
+            first_error = int(errors[0])
+            first_error_positions.append(first_error / max(length - 1, 1))
+            if (sequence[first_error + 1:] == 1).any():
+                trajectory_types["recovery"] += 1
+            else:
+                trajectory_types["monotone_error"] += 1
+        else:
+            trajectory_types["clean"] += 1
 
     position_rows = []
     for position_bin in range(args.position_bins):
@@ -143,6 +151,7 @@ def main():
         "first_error_relative_position_mean": (
             sum(first_error_positions) / len(first_error_positions) if first_error_positions else None
         ),
+        "trajectory_types": trajectory_types,
         **transitions,
     }
 

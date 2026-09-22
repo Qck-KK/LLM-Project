@@ -6,6 +6,7 @@ Scans a results directory for the JSON files produced by:
     - eval_step_metrics.py   (--results_dir ...)  -> {head}_step_metrics.json
     - eval_single_from_cache.py (--results_dir ...) -> {head}_single_metrics.json
     - analyze_head_behavior.py -> {head}_behavior_metrics.json
+    - analyze_offline_pruning.py -> {head}_pruning_metrics.json
     - analyze_data_bias.py -> deterministic_baselines.json
 
 and merges them (by "head" name) into ONE comparison table -- this is the
@@ -48,6 +49,7 @@ def main():
     bon_metrics = load_all(args.results_dir, "bon_metrics")
     single_metrics = load_all(args.results_dir, "single_metrics")
     behavior_metrics = load_all(args.results_dir, "behavior_metrics")
+    pruning_metrics = load_all(args.results_dir, "pruning_metrics")
 
     deterministic_path = os.path.join(args.results_dir, "deterministic_baselines.json")
     if os.path.exists(deterministic_path):
@@ -64,7 +66,7 @@ def main():
 
     heads = sorted(
         set(efficiency) | set(step_metrics) | set(bon_metrics)
-        | set(single_metrics) | set(behavior_metrics)
+        | set(single_metrics) | set(behavior_metrics) | set(pruning_metrics)
     )
     if not heads:
         print(f"[summarize] no result JSON files found under {args.results_dir}")
@@ -83,6 +85,12 @@ def main():
            "step_average_precision", "qvalue_ranking_accuracy"]
         + ["first_error_boundary_drop", "matched_correct_boundary_drop",
            "position_controlled_boundary_effect"]
+        + ["full_causal_mean_abs_difference", "full_causal_correlation",
+           "causal_step_roc_auc", "causal_minus_full_roc_auc",
+           "pruning_policy", "pruning_budget", "clean_false_prune_rate",
+           "pre_error_false_prune_rate", "error_coverage", "detection_at_0",
+           "detection_at_1", "detection_at_2", "median_detection_delay",
+           "safe_step_saving_rate", "oracle_efficiency_ratio"]
     )
 
     rows = []
@@ -92,6 +100,7 @@ def main():
         bon = bon_metrics.get(head, {})
         single = single_metrics.get(head, {})
         behavior = behavior_metrics.get(head, {})
+        pruning = pruning_metrics.get(head, {})
         row = {
             "head": head,
             "n_trainable_params": eff.get(
@@ -116,6 +125,21 @@ def main():
             "first_error_boundary_drop": behavior.get("first_error_boundary_drop", ""),
             "matched_correct_boundary_drop": behavior.get("matched_correct_boundary_drop", ""),
             "position_controlled_boundary_effect": behavior.get("position_controlled_boundary_effect", ""),
+            "full_causal_mean_abs_difference": pruning.get("full_causal_mean_abs_difference", ""),
+            "full_causal_correlation": pruning.get("full_causal_correlation", ""),
+            "causal_step_roc_auc": pruning.get("causal_step_roc_auc", ""),
+            "causal_minus_full_roc_auc": pruning.get("causal_minus_full_roc_auc", ""),
+            "pruning_policy": pruning.get("primary_policy", ""),
+            "pruning_budget": pruning.get("primary_budget", ""),
+            "clean_false_prune_rate": pruning.get("clean_false_prune_rate", ""),
+            "pre_error_false_prune_rate": pruning.get("pre_error_false_prune_rate", ""),
+            "error_coverage": pruning.get("error_coverage", ""),
+            "detection_at_0": pruning.get("detection_at_0", ""),
+            "detection_at_1": pruning.get("detection_at_1", ""),
+            "detection_at_2": pruning.get("detection_at_2", ""),
+            "median_detection_delay": pruning.get("median_detection_delay", ""),
+            "safe_step_saving_rate": pruning.get("safe_step_saving_rate", ""),
+            "oracle_efficiency_ratio": pruning.get("oracle_efficiency_ratio", ""),
         }
         for k in bon_keys:
             row[k] = bon.get(k, "")

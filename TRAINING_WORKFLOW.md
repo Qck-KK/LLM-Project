@@ -1,6 +1,6 @@
 # 轻量级 PRM 完整实验手册
 
-本文档是本项目唯一的完整实验执行说明，覆盖原有实验与新增分析。实验从环境准备、数据检查和编码器缓存开始，依次完成硬件基准、数据偏差审计、五种 Reward Head 训练、标准指标评估、单条轨迹评估、确定性与随机基线、分层分析、首错边界分析、扰动实验和最终结果汇总。
+本文档是本项目唯一的完整实验执行说明，覆盖原有实验与新增分析。实验从环境准备、数据检查和编码器缓存开始，依次完成硬件基准、数据偏差审计、五种 Reward Head 训练、标准指标评估、单条轨迹评估、确定性与随机基线、分层分析、首错边界分析、扰动实验、因果前缀检查、离线启发式剪枝和最终结果汇总。
 
 本项目受算力限制，明确不包含：
 
@@ -39,6 +39,12 @@ Majority / Position-only / Coin-flip baseline
         ↓
 可选确定性扰动实验
         ↓
+完整轨迹分数与因果前缀分数比较
+        ↓
+校准剪枝阈值并进行 held-out 离线回放
+        ↓
+误剪—检出—安全步骤节省权衡
+        ↓
 汇总最终表格、曲线与报告结论
 ```
 
@@ -51,6 +57,8 @@ Majority / Position-only / Coin-flip baseline
 5. Reward 是否真的在首个错误步骤附近发生下降？
 6. 控制步骤位置后，这种边界效应是否仍然存在？
 7. 顺序和局部信息被扰动后，不同网络是否表现出与其结构一致的敏感性？
+8. 去除未来步骤信息后，各奖励头的性能还能保留多少？
+9. 在限制正确轨迹误剪率的条件下，奖励信号能否转化为安全的理论步骤节省？
 
 ## 1. 环境准备
 
@@ -64,7 +72,7 @@ pip install -r requirements.txt
 
 ```bash
 python -m unittest discover -v
-python -m py_compile *.py tests/*.py
+python -m py_compile *.py analysis/*.py eval/*.py tests/*.py
 ```
 
 设备选择顺序为：
@@ -558,7 +566,68 @@ results/perturbation_results.csv
 results/perturbation_sensitivity.png
 ```
 
-## 13. 实验九：最终结果汇总
+## 13. 实验九：因果前缀与离线启发式剪枝
+
+完整轨迹上的 CNN、BiGRU 和 Attention 分数可能利用后续 step embedding，不能直接模拟在线早停。本实验对第 `t` 步只输入前 `t` 个缓存 embedding，并取前缀最后一步的奖励。冻结 Qwen 不会重新运行。
+
+轨迹分为：
+
+- `clean`：所有步骤正确；
+- `monotone_error`：首次错误后不再恢复；
+- `recovery`：出现 `正确→错误→正确`。
+
+主剪枝指标只使用前两类；恢复型轨迹单独报告，避免把可能恢复的路径错误地当成必然应被剪枝的路径。
+
+```bash
+python -m analysis.analyze_offline_pruning \
+  --cache_dir cache/val \
+  --checkpoint_dir checkpoints \
+  --results_dir results \
+  --heads linear mlp cnn gru attention \
+  --budgets 0.01 0.05 0.10 \
+  --primary_budget 0.05 \
+  --primary_policy single_low \
+  --bootstrap_samples 1000 \
+  --calibration_fraction 0.5 \
+  --split_seed 42 \
+  --seed 42
+```
+
+脚本比较两种策略：
+
+- `single_low`：当前奖励低于阈值时停止；
+- `two_consecutive`：连续两个奖励都低于阈值时停止。
+
+每个阈值只在 calibration 半区确定，并分别限制全正确轨迹误剪预算为 1%、5% 和 10%。阈值固定后才在 held-out test 半区评估。默认主比较点是 `single_low` 在 5% 误剪预算下的结果。
+
+主要指标：
+
+- `clean_false_prune_rate`：全正确轨迹误剪率；
+- `pre_error_false_prune_rate`：首错前错误停止的比例；
+- `error_coverage`：首错后成功停止的错误轨迹比例；
+- `detection_at_0/1/2`：在首错当步、后一步、后两步以内检出的比例；
+- `median_detection_delay`：首错到停止的中位延迟；
+- `safe_step_saving_rate`：只把首错后正确触发带来的剩余步骤计为收益；
+- `oracle_efficiency_ratio`：实现了多少比例的理想首错剪枝空间。
+
+1000 次轨迹级 bootstrap 只估计评估不确定性，不会重新训练模型。输出：
+
+```text
+results/{head}_causal_predictions.pt
+results/{head}_pruning_metrics.json
+results/causal_diagnostics.csv
+results/pruning_thresholds.json
+results/pruning_results.csv
+results/pruning_by_group.csv
+results/pruning_summary.md
+results/full_vs_causal_scores.png
+results/pruning_tradeoff.png
+results/pruning_detection_delay.png
+```
+
+`theoretical_step_saving_rate` 与 `safe_step_saving_rate` 都是基于缓存轨迹长度的 step-equivalent 指标，不能写成真实 wall-clock 或 FLOPs 加速。
+
+## 14. 实验十：最终结果汇总
 
 所有实验完成后运行：
 
@@ -581,6 +650,8 @@ python -m eval.summarize_results \
 - 首错边界下降；
 - 位置匹配的正确边界下降；
 - position-controlled boundary effect；
+- 完整轨迹与因果前缀的分数差异；
+- 5% 误剪预算下的检出率、延迟和安全步骤节省率；
 - majority、position-only、coin-flip baseline。
 
 输出：
@@ -590,7 +661,7 @@ results/summary.csv
 results/summary.md
 ```
 
-## 14. 使用 Notebook 一次执行完整流程
+## 15. 使用 Notebook 一次执行完整流程
 
 主入口：
 
@@ -607,9 +678,10 @@ Notebook 已按本手册顺序组织：
 5. 展示 loss 曲线；
 6. step-level held-out 评估；
 7. 分层、首错边界和扰动分析；
-8. 可选 single-solution 评估；
-9. coin-flip baseline；
-10. 汇总并展示最终表格。
+8. 因果前缀检查与离线启发式剪枝；
+9. 可选 single-solution 评估；
+10. coin-flip baseline；
+11. 汇总并展示最终表格、剪枝权衡图和主工作点。
 
 默认配置：
 
@@ -624,7 +696,7 @@ HEADS = ["linear", "mlp", "cnn", "gru", "attention"]
 
 Notebook 默认不会重新生成 embedding cache。
 
-## 15. 最终报告的推荐顺序
+## 16. 最终报告的推荐顺序
 
 报告应按照证据链组织，而不是逐个网络孤立汇报：
 
@@ -638,8 +710,10 @@ Notebook 默认不会重新生成 embedding cache。
 8. 能力来源：长度、首错位置和错误数量分层；
 9. 可解释行为：首错边界 reward drop 与正确边界对照；
 10. 结构敏感性：顺序与局部 mask 扰动；
-11. 效率：参数量、时间、显存和性能之间的权衡；
-12. 限制：单一训练种子、无 BON、无 LoRA、缓存扰动不等于因果解释。
+11. 因果前缀：去除未来信息后各 head 的性能变化；
+12. 剪枝价值：固定误剪预算下的检出、延迟和安全步骤节省；
+13. 效率：参数量、时间、显存和性能之间的权衡；
+14. 限制：单一训练种子、无 BON、无 LoRA、离线步骤节省不等于真实加速。
 
 不要仅根据总体 Accuracy 宣称某种网络“理解了推理”。架构结论至少应同时得到以下证据支持：
 
@@ -647,18 +721,19 @@ Notebook 默认不会重新生成 embedding cache。
 - held-out threshold-free 指标更好；
 - 对应分层样本上的优势；
 - 合理的首错边界行为；
-- 与网络结构一致的扰动敏感性。
+- 与网络结构一致的扰动敏感性；
+- 因果前缀下仍然有效的剪枝信号。
 
-## 16. 实验结束后的完整审计清单
+## 17. 实验结束后的完整审计清单
 
-### 16.1 代码检查
+### 17.1 代码检查
 
 ```bash
 python -m unittest discover -v
-python -m py_compile *.py tests/*.py
+python -m py_compile *.py analysis/*.py eval/*.py tests/*.py
 ```
 
-### 16.2 配置一致性
+### 17.2 配置一致性
 
 确认所有 head 使用：
 
@@ -670,16 +745,17 @@ python -m py_compile *.py tests/*.py
 - 相同学习率和 PQM `zeta`；
 - 相同早停规则。
 
-### 16.3 防止数据泄漏
+### 17.3 防止数据泄漏
 
 确认：
 
 - early stopping 只使用 calibration/development 半区；
 - 阈值只在 calibration 半区选择；
+- 剪枝阈值只用 calibration 中的全正确轨迹校准；
 - test 半区没有参与模型、epoch 或阈值选择；
 - summary 中所有可比较模型使用相同 test 半区。
 
-### 16.4 必需输出
+### 17.4 必需输出
 
 至少保留：
 
@@ -695,6 +771,11 @@ results/deterministic_baselines.json
 results/behavior_by_group.csv
 results/first_error_boundary_curves.csv
 results/perturbation_results.csv             # 执行扰动时
+results/*_causal_predictions.pt
+results/*_pruning_metrics.json
+results/pruning_results.csv
+results/pruning_by_group.csv
+results/pruning_summary.md
 results/summary.csv
 results/summary.md
 ```

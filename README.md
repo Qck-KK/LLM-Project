@@ -4,6 +4,8 @@ This repo trains lightweight reward heads on top of frozen encoder embeddings.
 It compares pointwise heads (`linear`, `mlp`) with contextual heads (`cnn`,
 `gru`, `attention`) and tests whether gains reflect semantic/error-boundary
 behavior rather than majority-class or step-position bias.
+It also checks how contextual heads change when future steps are hidden and
+simulates causal, offline early pruning under fixed clean-trajectory risk budgets.
 
 For the full step-by-step experiment instructions, see:
 
@@ -54,6 +56,8 @@ Analysis (`analysis/`):
 - `analysis/analyze_data_bias.py`: label audit plus majority and position-only baselines
 - `analysis/analyze_head_behavior.py`: stratified, first-error-boundary, and optional
   deterministic perturbation analyses
+- `analysis/analyze_offline_pruning.py`: causal-prefix scoring, calibrated offline
+  pruning, trajectory bootstrap intervals, baselines, and pruning trade-off plots
 
 Evaluation and analysis scripts are run as modules from the repository root,
 for example `python -m eval.eval_step_metrics ...`.

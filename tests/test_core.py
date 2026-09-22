@@ -1,7 +1,15 @@
 import unittest
 
 import torch
+import torch.nn as nn
 
+from analysis.analyze_offline_pruning import (
+    aggregate_pruning_records,
+    calibrate_threshold,
+    causal_prefix_scores,
+    classify_trajectory,
+    stopping_index,
+)
 from eval.eval_utils import (
     average_precision,
     best_threshold_accuracy,
@@ -61,6 +69,59 @@ class StabilityTests(unittest.TestCase):
             first_q = head(first, mask)
             second_q = head(second, mask)
         self.assertTrue(torch.allclose(first_q[:, :3], second_q[:, :3], atol=1e-6))
+
+
+class OfflinePruningTests(unittest.TestCase):
+    def test_trajectory_types_separate_recovery_cases(self):
+        self.assertEqual(classify_trajectory(torch.tensor([1, 1, -100]))["kind"], "clean")
+        self.assertEqual(classify_trajectory(torch.tensor([1, 0, 0]))["kind"], "monotone_error")
+        self.assertEqual(classify_trajectory(torch.tensor([1, 0, 1]))["kind"], "recovery")
+
+    def test_causal_prefix_scoring_hides_future_steps(self):
+        class SequenceMeanHead(nn.Module):
+            def forward(self, step_hidden, step_mask):
+                masked = step_hidden.squeeze(-1) * step_mask
+                mean = masked.sum(dim=1) / step_mask.sum(dim=1)
+                return mean.unsqueeze(1).expand(-1, step_hidden.shape[1])
+
+        hidden = torch.tensor([[[1.0], [3.0], [5.0]]])
+        mask = torch.tensor([[True, True, True]])
+        scores = causal_prefix_scores(SequenceMeanHead(), hidden, mask)
+        self.assertTrue(torch.allclose(scores, torch.tensor([[1.0, 2.0, 3.0]])))
+
+    def test_threshold_calibration_respects_clean_risk_budget(self):
+        scores = torch.tensor([
+            [0.1, 0.8],
+            [0.2, 0.8],
+            [0.3, 0.8],
+            [0.4, 0.8],
+        ])
+        labels = torch.ones(4, 2, dtype=torch.long)
+        calibration = torch.ones(4, dtype=torch.bool)
+        threshold, observed, n_clean = calibrate_threshold(
+            scores, labels, calibration, "single_low", 0.25
+        )
+        self.assertEqual(n_clean, 4)
+        self.assertLessEqual(observed, 0.25)
+        self.assertEqual(
+            sum(stopping_index(row, threshold, "single_low") is not None for row in scores),
+            1,
+        )
+
+    def test_safe_saving_excludes_false_prunes(self):
+        records = [
+            {"kind": "clean", "length": 4, "first_error": None,
+             "stop": 1, "saved": 2, "delay": None},
+            {"kind": "monotone_error", "length": 5, "first_error": 2,
+             "stop": 2, "saved": 2, "delay": 0},
+            {"kind": "monotone_error", "length": 5, "first_error": 3,
+             "stop": 1, "saved": 3, "delay": -2},
+        ]
+        metrics = aggregate_pruning_records(records)
+        self.assertAlmostEqual(metrics["clean_false_prune_rate"], 1.0)
+        self.assertAlmostEqual(metrics["pre_error_false_prune_rate"], 0.5)
+        self.assertAlmostEqual(metrics["error_coverage"], 0.5)
+        self.assertAlmostEqual(metrics["safe_step_saving_rate"], 2 / 14)
 
 
 if __name__ == "__main__":
