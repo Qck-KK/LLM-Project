@@ -148,6 +148,7 @@ def main_eval_steps():
                   "--bootstrap_samples", "2000"])
     steps.append(bon(ckpt, ALL_HEADS, out))
     steps.append([PY, "-m", "eval.eval_single_from_step_cache", "--cache_dir", VAL_CACHE,
+                  "--source_file", "data/val.jsonl",
                   "--checkpoint_dir", ckpt, "--heads", *ALL_HEADS,
                   "--aggs", "min", "mean", "last", "--results_dir", out,
                   "--bootstrap_samples", "2000", *SPLIT, "--seed", "42"])

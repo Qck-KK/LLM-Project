@@ -772,10 +772,10 @@ python -m eval.eval_bon   --cache_dir cache/single_eval --eval_file data/single_
 若 BoN / OOD single-solution 表现差，需要区分"模型做不了轨迹级判断"与"迁移不过去"。
 
 ```bash
-python -m eval.eval_single_from_step_cache   --cache_dir cache/val_fixed --checkpoint_dir checkpoints/final   --heads linear mlp cnn gru attention attention_pe --aggs min mean last   --results_dir results_final --bootstrap_samples 2000   --calibration_fraction 0.5 --split_seed 42 --seed 42
+python -m eval.eval_single_from_step_cache   --cache_dir cache/val_fixed --source_file data/val.jsonl --checkpoint_dir checkpoints/final   --heads linear mlp cnn gru attention attention_pe --aggs min mean last   --results_dir results_final --bootstrap_samples 2000   --calibration_fraction 0.5 --split_seed 42 --seed 42
 ```
 
-它复用验证集缓存，把"全部步骤正确"作为轨迹标签，因此与 OOD 版本只差分布。
+它复用验证集缓存，把"全部步骤正确"作为轨迹标签，因此与 OOD 版本只差分布。`--source_file` 让这个标签来自原始数据的完整步骤标签：缓存只保留未被 `max_length` 截断的步骤，否则错误只出现在截断部分的解答会被误判为正确（验证集 held-out 半区中 841 条"正确"里有 11 条如此）。
 
 ## 14E. 实验十五：LoRA 对照
 

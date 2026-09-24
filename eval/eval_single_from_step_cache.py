@@ -29,6 +29,7 @@ from eval.eval_utils import (
     get_device,
     roc_auc,
 )
+from dataset import MathShepherdStepDataset
 from reward_heads import build_reward_head
 
 
@@ -65,6 +66,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache_dir", required=True,
                         help="Step-level validation cache (labels + step_mask).")
+    parser.add_argument("--source_file", default=None,
+                        help="JSONL the cache was built from; its full step labels "
+                             "decide whether a solution is correct, including steps "
+                             "lost to truncation.")
     parser.add_argument("--checkpoint_dir", required=True)
     parser.add_argument("--checkpoint_pattern", default="{head}_head.pt")
     parser.add_argument("--heads", nargs="+", default=list(HEAD_CHOICES))
@@ -96,6 +101,15 @@ def main():
     # A solution counts as correct only when every one of its steps is correct.
     final_correct = (n_steps > 0) & (n_correct == n_steps)
     usable = n_steps > 0
+    if args.source_file:
+        # The cache only holds labels for steps that survived max_length
+        # truncation, so an error confined to the truncated tail would make the
+        # solution look correct. Take the target from the full label list.
+        records = MathShepherdStepDataset._load_raw(args.source_file)
+        if len(records) != labels.shape[0]:
+            raise RuntimeError("source_file has {0} records, cache {1}".format(
+                len(records), labels.shape[0]))
+        final_correct = torch.tensor([all(r["labels"]) for r in records]) & usable
 
     _, test_mask = deterministic_example_split(
         labels.shape[0], args.calibration_fraction, args.split_seed
@@ -152,6 +166,7 @@ def main():
     with open(out_json, "w") as f:
         json.dump({"cache_dir": args.cache_dir,
                    "checkpoint_dir": args.checkpoint_dir,
+                   "source_file": args.source_file,
                    "split_seed": args.split_seed,
                    "calibration_fraction": args.calibration_fraction,
                    "bootstrap_samples": args.bootstrap_samples,
