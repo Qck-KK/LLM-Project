@@ -1,14 +1,27 @@
 # 轻量级 PRM 完整实验手册
 
-本文档是本项目唯一的完整实验执行说明，覆盖原有实验与新增分析。实验从环境准备、数据检查和编码器缓存开始，依次完成硬件基准、数据偏差审计、五种 Reward Head 训练、标准指标评估、单条轨迹评估、确定性与随机基线、分层分析、首错边界分析、扰动实验、因果前缀检查、离线启发式剪枝和最终结果汇总。
+本文档是本项目唯一的完整实验执行说明。实验从环境准备、数据检查和编码器缓存开始，依次完成数据偏差审计、Reward Head 训练、标准指标评估、置信区间、分层与首错边界分析、扰动实验、因果前缀检查、离线剪枝、Best-of-N 重排序、以及 LoRA 对照。
 
-本项目受算力限制，明确不包含：
+## 协议已修订，旧版结论作废
 
-- Best-of-N 候选生成与 BON@8/BON@16 评估；
-- 多随机种子重复训练；
-- LoRA 或全参数微调编码器。
+本手册的初版规定 `lr=1e-3`、最多 10 epochs、patience=2，并据此比较了五种架构。后续的 6x3 学习率网格证明 **`1e-3` 是三个候选值中对全部六个头都最差的一个**（代价 0.056–0.445 dev loss），而这个影响比被比较的架构差异大 4–8 倍。在调好学习率后架构排名发生反转。
 
-所有模型训练使用一个固定种子 `42`。这能保证单次实验可复现，但不能替代多随机种子方差分析。除最初的 embedding 预计算外，后续实验全部复用冻结编码器缓存，不再运行 Qwen。
+**因此：任何在 `lr=1e-3` 下得到的架构结论都不成立。** 当前协议为：
+
+| 项 | 旧版 | 现行 |
+|---|---|---|
+| 学习率 | `1e-3` | `1e-4`（网格内对 6 个头中的 5 个最优） |
+| epoch 上限 | 10 | 30 |
+| early stopping patience | 2 | 5 |
+| 主指标 | step-level 指标 | step-level 指标 + **Best-of-N** |
+
+原先因算力排除的三项现已全部完成，不再是 scope 之外：
+
+- **Best-of-N**：编码器缓存是唯一昂贵的部分，而它已经存在，打分只需几秒。BoN 是锚点论文 PQM 自己的主指标，排除它是初版最严重的方法论失误。
+- **多随机种子**：`attention` / `cnn` / `mlp` 各跑 3 个种子。
+- **LoRA**：全量 440k 过一轮，作为"冻结编码器"这一前提的对照。
+
+训练仍使用固定种子 `42`（多种子实验另用 43、44）。除 embedding 预计算与 LoRA 训练外，其余实验全部复用缓存，不再运行 Qwen。
 
 ## 0. 完整实验顺序
 
@@ -45,8 +58,20 @@ Majority / Position-only / Coin-flip baseline
         ↓
 误剪—检出—安全步骤节省权衡
         ↓
+学习率网格（决定上面所有架构结论是否成立）
+        ↓
+轨迹级配对 bootstrap 置信区间
+        ↓
+Best-of-N 重排序 vs majority voting
+        ↓
+LoRA 对照（冻结前提是否成立）
+        ↓
+早停与种子敏感性
+        ↓
 汇总最终表格、曲线与报告结论
 ```
+
+学习率网格排在架构分析之后，是因为历史顺序如此；**若从头重做，它应当排在训练之前** —— 先确定每个头的学习率，再比较架构。
 
 完整实验要回答以下问题：
 
@@ -261,11 +286,11 @@ results/deterministic_baselines.json
 
 - train cache；
 - development 切分；
-- 最大 10 epochs；
-- 学习率 `1e-3`；
+- 最大 30 epochs；
+- 学习率 `1e-4`；
 - PQM margin `zeta=4.0`；
 - 固定随机种子 `42`；
-- patience 为 2 的早停规则。
+- patience 为 5 的早停规则。
 
 运行：
 
@@ -280,7 +305,7 @@ for head in linear mlp cnn gru attention; do
     --seed 42 \
     --calibration_fraction 0.5 \
     --split_seed 42 \
-    --lr 1e-3 \
+    --lr 1e-4 \
     --zeta 4.0 \
     --save_path "checkpoints/${head}_head.pt" \
     --results_dir results
@@ -289,9 +314,9 @@ done
 
 训练协议：
 
-1. 每个模型最多训练 10 epochs；
+1. 每个模型最多训练 30 epochs；
 2. 每个 epoch 在 calibration/development 半区计算 PQM loss；
-3. 连续两个 epoch 没有改善则提前停止；
+3. 连续五个 epoch 没有改善则提前停止；
 4. 始终保留 development loss 最低的 checkpoint；
 5. held-out test 半区不参与 checkpoint 选择；
 6. 每个 epoch 内记录约五个训练 loss 点，避免只有少量曲线点。
@@ -661,6 +686,106 @@ results/summary.csv
 results/summary.md
 ```
 
+## 14A. 实验十一：学习率网格（最重要的一步）
+
+初版协议把 `lr` 固定在 `1e-3` 然后比较架构。这一步检验那个固定值是否站得住。
+
+```bash
+for lr in 1e-3 3e-4 1e-4; do
+  for head in linear mlp cnn gru attention attention_pe; do
+    python train_from_cache.py       --cache_dir cache/train --val_cache_dir cache/val       --head "$head" --epochs 30 --early_stopping_patience 5 --seed 42       --calibration_fraction 0.5 --split_seed 42 --lr "$lr" --zeta 4.0       --save_path "checkpoints/lrsweep/${head}_lr${lr}_head.pt"       --results_dir "results_lrsweep/${head}_lr${lr}"
+  done
+done
+```
+
+实测结果：**`1e-3` 对六个头全部最差**，改善幅度 0.056（linear）到 0.445（attention），
+而架构间的差异不超过 0.05。排名因此反转 —— `cnn` 在 `1e-3` 下领先，`attention` 在调好后领先。
+
+两条必须写进 limitation 的边界：网格没有探到下界（`1e-4` 对 5/6 个头最优且趋势单调），
+以及不同容量的头达到最优所需的 epoch 不同（`linear` 约 11，`gru` 约 25）。
+
+## 14B. 实验十二：主指标的置信区间
+
+架构排名依赖 0.005 量级的差值，没有区间就无法判断是否为噪声。
+
+```bash
+python -m analysis.bootstrap_step_metrics   --cache_dir cache/val --checkpoint_dir checkpoints   --results_dir results --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --calibration_fraction 0.5 --split_seed 42 --seed 42
+
+python -m analysis.bootstrap_causal_metrics   --results_dir results --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --seed 42
+```
+
+重采样单位是**轨迹**而非步骤（同一条解答内的步骤高度相关），且所有头在**同一次重采样**上打分，
+这样头与头之间的差值才有正确的配对区间。
+
+`bootstrap_causal_metrics` 复用 `analyze_offline_pruning` 已存的 causal predictions，零前向开销。
+
+输出：`step_metrics_ci.json` / `.csv` / `_pairwise.csv`、`causal_metrics_ci.json`。
+
+## 14C. 实验十三：Best-of-N 重排序
+
+这是锚点论文 PQM 的主指标，也是 PRM 最贴近实际的用途。
+
+```bash
+python -m eval.eval_bon   --cache_dir cache/single_eval --eval_file data/single_eval.jsonl   --source_file data/gsm8k_qwen0.5b_bon16.jsonl   --checkpoint_dir checkpoints --heads linear mlp cnn gru attention attention_pe   --aggs min mean last --ks 1 2 4 8 16 --subsets_per_question 20   --bootstrap_samples 2000 --results_dir results --seed 42
+```
+
+两条参照线缺一不可：
+
+- `majority_vote`（self-consistency）：只数最终答案，不用奖励模型。**PRM 必须打败它才有部署价值**；
+- `oracle`：16 个候选里只要有一个对就算对，给出重排序的上限。
+
+`k < 16` 时每题抽多个随机子集，避免结果依赖候选的生成顺序。置信区间按**题目**重采样
+（同一题的 16 个候选不独立）。
+
+## 14D. 实验十四：同分布 single-solution 对照
+
+若 BoN / OOD single-solution 表现差，需要区分"模型做不了轨迹级判断"与"迁移不过去"。
+
+```bash
+python -m eval.eval_single_from_step_cache   --cache_dir cache/val --checkpoint_dir checkpoints   --heads linear mlp cnn gru attention attention_pe --aggs min mean last   --results_dir results --bootstrap_samples 2000   --calibration_fraction 0.5 --split_seed 42 --seed 42
+```
+
+它复用验证集缓存，把"全部步骤正确"作为轨迹标签，因此与 OOD 版本只差分布。
+
+## 14E. 实验十五：LoRA 对照
+
+冻结编码器是**本项目自己引入的简化**，不是 PQM 的做法（后者在 8 卡上全量微调 7B）。
+这一步检验该前提的代价。
+
+```bash
+python train_lora.py   --train_file data/train.jsonl --epochs 1 --batch_size 4 --max_length 512   --lr 1e-4 --zeta 4.0 --seed 42   --save_dir checkpoints/lora_full --results_dir results_lora_full
+
+# LoRA 改变了编码器，评估缓存必须重新生成
+python precompute_embeddings.py --train_file data/val.jsonl   --cache_dir cache/val_lora --lora_path checkpoints/lora_full/adapter   --batch_size 16 --max_length 512 --dtype float16
+
+python -m analysis.compare_lora_frozen   --arm "lora_linear:cache/val_lora:linear:checkpoints/lora_eval/linear_head.pt"   --arm "frozen_linear:cache/val:linear:checkpoints/linear_head.pt"   --arm "frozen_attention:cache/val:attention:checkpoints/attention_head.pt"   --results_dir results --bootstrap_samples 2000
+```
+
+在 8GB 显存上可用的操作点只有 `batch_size=4, max_length=512`；`batch_size=8` 会溢出并慢 6.8 倍。
+全量一轮约 10 小时。
+
+**解读时必须声明遍历次数不对称**（LoRA 1 轮 vs 冻结 30 轮）。该偏差对冻结侧有利，
+因此"LoRA 无收益"是保守结论，而"LoRA 落败"无法区分于"轮数不够"。
+
+## 14F. 实验十六：早停与种子敏感性
+
+```bash
+# patience 是否扭曲了排名
+for head in linear mlp cnn gru attention; do
+  python train_from_cache.py --cache_dir cache/train --val_cache_dir cache/val     --head "$head" --epochs 10 --early_stopping_patience 4 --seed 42     --calibration_fraction 0.5 --split_seed 42 --lr 1e-3 --zeta 4.0     --save_path "checkpoints/patience4/${head}_head.pt"     --results_dir "results_patience4"
+done
+
+# 种子方差是否大于架构差异
+for seed in 43 44; do
+  for head in attention cnn mlp; do
+    python train_from_cache.py --cache_dir cache/train --val_cache_dir cache/val       --head "$head" --epochs 10 --early_stopping_patience 2 --seed "$seed"       --calibration_fraction 0.5 --split_seed 42 --lr 1e-4 --zeta 4.0       --save_path "checkpoints/seeds/${head}_s${seed}_head.pt"       --results_dir "results_seeds/${head}_s${seed}"
+  done
+done
+```
+
+判据是**区间是否重叠**，而不是点估计谁高。实测三个头的 AUC 区间两两不重叠，
+架构差距是种子标准差的 3.5–5.5 倍。
+
 ## 15. 使用 Notebook 一次执行完整流程
 
 主入口：
@@ -703,7 +828,7 @@ Notebook 默认不会重新生成 embedding cache。
 1. 项目目标：冻结编码器是否可以配合轻量 Reward Head 完成过程奖励建模；
 2. 数据概况：标签比例、轨迹长度、首错位置和位置偏差；
 3. 基线：majority、position-only、coin-flip；
-4. 训练过程：统一 10 epochs 上限、早停和最佳 checkpoint；
+4. 训练过程：统一 30 epochs 上限、patience=5 早停和最佳 checkpoint；
 5. 总体表现：五个 head 的 held-out ROC-AUC、AP 和 ranking accuracy；
 6. 单步语义：Linear/MLP 是否超过位置基线；
 7. 上下文价值：CNN/BiGRU/Attention 是否超过 pointwise head；
@@ -713,7 +838,16 @@ Notebook 默认不会重新生成 embedding cache。
 11. 因果前缀：去除未来信息后各 head 的性能变化；
 12. 剪枝价值：固定误剪预算下的检出、延迟和安全步骤节省；
 13. 效率：参数量、时间、显存和性能之间的权衡；
-14. 限制：单一训练种子、无 BON、无 LoRA、离线步骤节省不等于真实加速。
+14. 学习率网格：说明为什么固定 `lr` 下的架构结论不成立；
+15. Best-of-N：与 majority voting 和 oracle 对照；
+16. LoRA 对照：冻结前提的代价；
+17. 限制：每条都应附上量化它的那个实验，而不是笼统声明 ——
+    epoch 预算与容量交互（已用 30 轮验证，排名不变）、
+    lr 网格未探到下界、
+    LoRA 非算力对齐（1 轮 vs 30 轮，偏差对冻结侧有利）、
+    多数配置单种子（三头三种子验证过，区间不重叠）、
+    `max_length=512` 丢失约 9% 步骤（2048 重编码验证过，±0.009 AUC）、
+    离线步骤节省不等于真实加速。
 
 不要仅根据总体 Accuracy 宣称某种网络“理解了推理”。架构结论至少应同时得到以下证据支持：
 
@@ -778,6 +912,26 @@ results/pruning_by_group.csv
 results/pruning_summary.md
 results/summary.csv
 results/summary.md
+results/step_metrics_ci.json                 # 主指标置信区间
+results/step_metrics_ci_pairwise.csv         # 配对差值与显著性
+results/causal_metrics_ci.json               # 因果前缀置信区间
+results/bon_results.csv                      # Best-of-N vs majority / oracle
+results/single_indist_metrics.csv            # 同分布 single-solution 对照
+results/lora_vs_frozen.json                  # LoRA 对照
 ```
 
-当前仓库不包含真实 cache、checkpoint 或实验结果。完成真实数据运行后，再根据上述清单进行最终结果审计。
+### 17.5 结论审计
+
+跑完不等于结论成立。交付前逐条核对：
+
+1. **每个架构声明都有置信区间**，且区间不重叠或配对差值显著；
+2. **pointwise 头的因果前缀分数必须精确等于完整轨迹分数**（差值应在 1e-6 量级）。
+   若不为零，说明加载路径按 label 而非 `step_mask` 筛选了步骤 —— 这个 bug 曾使
+   因果落差被夸大 40%；
+3. **无位置编码的 attention 在 reverse / swap 扰动下 ΔAUC 必须精确为 0**
+   （它是置换等变的）。若不为零说明实现有误；
+4. **学习率不是固定的**，或若固定则已用网格证明该值合理；
+5. **Best-of-N 与 majority voting 对照过** —— 只报 step-level 指标不足以支撑部署结论；
+6. 上述 1–3 条已写成 `tests/test_core.py` 中的断言，`python -m unittest discover` 会检查。
+
+结果目录的用途见 `RESULTS_MAP.md`；最终数字取自 `results_conv/`。
