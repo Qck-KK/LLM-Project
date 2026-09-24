@@ -1,70 +1,160 @@
-# Lightweight PRM Reward Head Training
+# Lightweight PRM Reward Heads on a Frozen Encoder
 
-This repo trains lightweight reward heads on top of frozen encoder embeddings.
-It compares pointwise heads (`linear`, `mlp`) with contextual heads (`cnn`,
-`gru`, `attention`) and tests whether gains reflect semantic/error-boundary
-behavior rather than majority-class or step-position bias.
-It also checks how contextual heads change when future steps are hidden and
-simulates causal, offline early pruning under fixed clean-trajectory risk budgets.
+Trains five lightweight reward heads on top of a frozen Qwen2.5-0.5B step
+encoder with the PQM comparative ranking loss, and asks which head architecture
+is worth the parameters. The heads split into pointwise (`linear`, `mlp`) and
+contextual (`cnn`, `gru`, `attention`), plus `attention_pe`, an order-aware
+variant added after the perturbation analysis.
 
-For the full step-by-step experiment instructions, see:
+The anchor is *Process Reward Model with Q-Value Rankings* (PQM, Li & Li).
+This repository reuses PQM's loss and its Math-Shepherd training corpus, but
+deviates in two ways that matter and are discussed below: it freezes a 0.5B
+encoder where PQM fine-tunes a 7B one, and it added an architecture axis that
+PQM never ablates.
 
-```text
-TRAINING_WORKFLOW.md
-```
+## What the experiments found
 
-## Main Entry
+**Contextual heads win on held-out step scoring.** Held-out ROC-AUC over 2,223
+trajectories, 2,000 trajectory-level bootstrap resamples, each head at 30
+epochs and `lr=1e-4`:
 
-Use:
+| head | params | ROC-AUC [95% CI] |
+|---|---|---|
+| `attention` | 6.43M | **0.8834** [0.8710, 0.8959] |
+| `attention_pe` | 6.43M | 0.8782 [0.8655, 0.8906] |
+| `gru` | 788k | 0.8682 [0.8553, 0.8810] |
+| `cnn` | 394k | 0.8627 [0.8502, 0.8759] |
+| `mlp` | 263k | 0.8507 [0.8379, 0.8641] |
+| `linear` | 897 | 0.7885 [0.7739, 0.8029] |
+| *position-only baseline* | 0 | *0.6251* |
+| *majority baseline* | 0 | *0.5000* |
 
-```text
-complete_training.ipynb
-```
+13 of the 15 pairwise differences are significant; `{attention, attention_pe}`
+and `{gru, cnn}` are the two indistinguishable groups. Every head clears the
+position-only baseline by a wide margin, so the frozen representation does carry
+step-correctness signal rather than step position.
 
-The notebook can consume caches copied from another host, or caches generated
-locally with `precompute_embeddings.py`.
+**That advantage comes from reading future steps, and does not survive.** The
+encoder is causal, but a bidirectional head re-introduces access to later steps
+above it. Scoring step *t* from the first *t* embeddings only -- the setting any
+online early-exit policy actually faces -- removes most of the gap:
 
-The final protocol uses a maximum of 10 epochs, validation-loss early stopping
-(patience 2), one fixed seed, a trajectory-level calibration/test split, and
-threshold-free metrics. Best-of-N and multi-seed training are explicitly out
-of scope because of compute constraints.
+| head | causal ROC-AUC | penalty vs full trajectory |
+|---|---|---|
+| `mlp` | 0.8507 | 0.0000 |
+| `attention` | 0.8500 | −0.0334 |
+| `gru` | 0.8451 | −0.0230 |
+| `attention_pe` | 0.8308 | −0.0474 |
+| `linear` | 0.7885 | 0.0000 |
+| `cnn` | **0.7737** | **−0.0890** |
 
-## File Layout
+Under causal scoring `attention`, `mlp` and `gru` are statistically
+indistinguishable, and `cnn` -- the head that led under the original protocol --
+falls significantly below the 897-parameter linear head. The exactly-zero
+penalty for the pointwise heads is an invariant, asserted in the test suite.
 
-Core experiment files:
+**None of it transfers to the task a PRM is for.** Reranking 16 Qwen2.5-0.5B
+candidates per GSM8K question (1,319 questions, question-level bootstrap):
 
-- `dataset.py`: loads Math-Shepherd-style JSONL data
-- `encoder.py`: frozen step encoder used during precompute
-- `precompute_embeddings.py`: creates train/validation embedding caches
-- `precompute_eval_embeddings.py`: creates optional single-eval cache
-- `benchmark.py`: optional hardware throughput check
-- `complete_training.ipynb`: final notebook entry point
-- `train_from_cache.py`: trains reward heads from cached embeddings
-- `reward_heads.py`: defines `linear`, `mlp`, `cnn`, `gru`, and `attention`
-- `pqm_loss.py`: PQM loss
+| selector | BoN@16 |
+|---|---|
+| oracle (any of 16 correct) | 0.7604 |
+| **majority voting** (no reward model) | **0.4655** |
+| best of 18 head/aggregation combinations | 0.3723 |
+| random selection | 0.3283 |
 
-Evaluation and reporting (`eval/`):
+The best configuration overlaps random selection and loses to free majority
+voting by 0.093. This reproduces a known result -- step-level PRM metrics
+correlate weakly with Best-of-N, and PRMs frequently fail to beat
+self-consistency -- in a setting where all six heads share bit-identical frozen
+features, which isolates the head's contribution.
 
-- `eval/eval_utils.py`: shared evaluation utilities
-- `eval/eval_step_metrics.py`: validation-cache step metrics
-- `eval/eval_single_from_cache.py`: optional single-solution evaluation
-- `eval/eval_coin_flip_baseline.py`: fair-coin random baseline
-- `eval/summarize_results.py`: writes `summary.csv` and `summary.md`
+**Freezing the encoder is not what breaks it.** LoRA (r=16, on q/k/v/o) over one
+full pass of all 440k trajectories gives no significant gain over the frozen
+encoder with the same linear head (+0.0106 AUC, 95% CI [−0.0005, +0.0224]), is
+significantly worse than the frozen encoder with an attention head (−0.0843),
+and fails Best-of-N identically. Picking a better head on frozen features is
+worth roughly nine times more than unfreezing the encoder.
+
+**The original architecture ranking was a learning-rate artefact.** A 6x3 sweep
+found `lr=1e-3` -- the value the first protocol fixed -- to be the worst of three
+for all six heads, costing 0.056 to 0.445 dev loss. That effect is 4-8x larger
+than the architecture differences being measured, and it inverted the ranking:
+`cnn` led at `1e-3`, `attention` leads once the rate is tuned. This is the
+single most important methodological finding here, and it is the reason the
+superseded result directories are kept rather than overwritten.
+
+## Limitations
+
+* **Training budget interacts with capacity.** Under matched `lr=1e-4`, best
+  epochs run from 11 (`linear`) to 25 (`gru`); a fixed budget systematically
+  favours smaller heads. Extending from 10 to 30 epochs moved every head by
+  0.07-0.13 dev loss but did not change the ranking or the significance
+  structure, so the conclusions hold -- but the comparison is still "best within
+  30 epochs", not "best at convergence".
+* **The learning-rate grid has no lower bound.** `1e-4` was best or near-best for
+  every head and the trend is monotone, so the optimum lies below the range
+  searched.
+* **The LoRA arm is not compute-matched** (1 epoch against the frozen arms' 30).
+  The handicap favours the frozen arms, which makes "LoRA shows no gain"
+  conservative and a LoRA loss ambiguous.
+* **Single seed for most runs.** Three seeds were run for `attention`, `cnn` and
+  `mlp`: the AUC ranges do not overlap and the architecture gaps are 3.5-5.5x
+  the seed standard deviation, so the ranking is seed-robust, but the other
+  heads rest on one seed each.
+* **`max_length=512` truncation.** About 9% of steps (concentrated in long
+  trajectories, 80% of them error steps) are not encoded. Re-encoding the
+  validation set at 2048 moved every head by +0.007 to +0.009 AUC and changed no
+  ranking.
+* **Single encoder, single training corpus.** Math-Shepherd's Monte-Carlo step
+  labels are known to be noisy, and nothing here separates that from the
+  architecture question.
+
+## Repository layout
+
+Core pipeline:
+
+- `encoder.py` — frozen step encoder; one hidden state per `ки` marker
+- `precompute_embeddings.py`, `precompute_eval_embeddings.py` — build caches;
+  `--lora_path` exports from a LoRA-adapted encoder instead
+- `dataset.py` — Math-Shepherd loader; `collate_fn` aligns labels to the step
+  markers that survive tokenization
+- `reward_heads.py` — the six heads behind one interface
+- `pqm_loss.py` — PQM comparative ranking loss
+- `train_from_cache.py` — trains a head from cached embeddings
+- `train_lora.py` — the LoRA arm: adapters on the encoder plus a value head
+
+Evaluation (`eval/`):
+
+- `eval_step_metrics.py` — held-out step metrics
+- `eval_bon.py` — Best-of-N against majority voting and an oracle
+- `eval_single_from_cache.py` — single-solution scoring from a dedicated cache
+- `eval_single_from_step_cache.py` — the in-distribution single-solution control
+- `eval_coin_flip_baseline.py`, `summarize_results.py`
 
 Analysis (`analysis/`):
 
-- `analysis/analyze_data_bias.py`: label audit plus majority and position-only baselines
-- `analysis/analyze_head_behavior.py`: stratified, first-error-boundary, and optional
-  deterministic perturbation analyses
-- `analysis/analyze_offline_pruning.py`: causal-prefix scoring, calibrated offline
-  pruning, trajectory bootstrap intervals, baselines, and pruning trade-off plots
+- `analyze_data_bias.py` — label audit, majority and position-only baselines
+- `analyze_head_behavior.py` — stratified, first-error-boundary and perturbation
+  analyses
+- `analyze_offline_pruning.py` — causal-prefix scoring and risk-budgeted pruning
+- `bootstrap_step_metrics.py`, `bootstrap_causal_metrics.py` — paired
+  trajectory-level confidence intervals
+- `compare_lora_frozen.py` — paired comparison across two encoders' caches
 
-Evaluation and analysis scripts are run as modules from the repository root,
-for example `python -m eval.eval_step_metrics ...`.
+Run evaluation and analysis as modules from the repository root, for example
+`python -m eval.eval_step_metrics ...`.
 
-Install the environment with `pip install -r requirements.txt`. Follow
-`TRAINING_WORKFLOW.md` in order; it is the authoritative experiment manual.
-Run `python -m unittest discover -v` for the lightweight audit checks.
+## Getting started
 
-Old notebooks, historical result JSON files, and unused optional experiment
-scripts were removed so the remaining project has one clear training path.
+```bash
+pip install -r requirements.txt
+python -m unittest discover -v
+```
+
+`TRAINING_WORKFLOW.md` is the step-by-step manual. `RESULTS_MAP.md` says which
+result directory answers which question; read `results_conv/` for the final
+numbers. Four of the fourteen tests are invariants rather than unit tests --
+pointwise heads must score prefixes and full trajectories identically, plain
+attention must be permutation equivariant — and two of them exist because the
+corresponding bug had already corrupted a published conclusion.
