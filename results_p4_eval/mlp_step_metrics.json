@@ -1,0 +1,16 @@
+{
+  "head": "mlp",
+  "checkpoint": "checkpoints/patience4/mlp_head.pt",
+  "step_reward_accuracy": 0.7378141283988953,
+  "step_reward_calibration_accuracy": 0.7441381812095642,
+  "step_reward_threshold": -3.7724852561950684,
+  "step_balanced_accuracy": 0.7348397970199585,
+  "step_roc_auc": 0.822910487651825,
+  "step_average_precision": 0.7886662483215332,
+  "qvalue_ranking_accuracy": 0.9705301284162002,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2224,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 262657
+}

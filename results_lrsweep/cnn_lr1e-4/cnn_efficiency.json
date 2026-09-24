@@ -1,0 +1,18 @@
+{
+  "head": "cnn",
+  "n_trainable_params": 393601,
+  "seed": 42,
+  "split_seed": 42,
+  "calibration_fraction": 0.5,
+  "epochs": 10,
+  "max_epochs": 10,
+  "best_epoch": 8,
+  "stopped_early": false,
+  "total_train_time_sec": 1539.5374858379364,
+  "peak_mem_mb": 47.164928,
+  "device": "cuda",
+  "final_train_loss": 2.3915084638260242,
+  "final_eval_loss": 2.416882919214612,
+  "last_train_loss": 2.345560504148509,
+  "last_eval_loss": 2.4260920108222277
+}

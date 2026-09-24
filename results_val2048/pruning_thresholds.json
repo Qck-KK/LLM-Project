@@ -1,0 +1,218 @@
+{
+  "linear": {
+    "single_low": {
+      "0.01": {
+        "threshold": -8.497185707092285,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -6.680338382720947,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -5.837709903717041,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    },
+    "two_consecutive": {
+      "0.01": {
+        "threshold": -7.862917900085449,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -5.758446216583252,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -4.822332382202148,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    }
+  },
+  "mlp": {
+    "single_low": {
+      "0.01": {
+        "threshold": -9.593480110168457,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -6.771530628204346,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -6.276491641998291,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    },
+    "two_consecutive": {
+      "0.01": {
+        "threshold": -8.382349967956543,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -6.009734630584717,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -5.360593318939209,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    }
+  },
+  "cnn": {
+    "single_low": {
+      "0.01": {
+        "threshold": -9.355145454406738,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -7.373363971710205,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -6.870433330535889,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    },
+    "two_consecutive": {
+      "0.01": {
+        "threshold": -8.92179012298584,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -6.926701545715332,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -5.956676483154297,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    }
+  },
+  "gru": {
+    "single_low": {
+      "0.01": {
+        "threshold": -8.841464042663574,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -7.6770148277282715,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -6.489599227905273,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    },
+    "two_consecutive": {
+      "0.01": {
+        "threshold": -8.558679580688477,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -7.03814172744751,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -5.577182292938232,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    }
+  },
+  "attention": {
+    "single_low": {
+      "0.01": {
+        "threshold": -9.029595375061035,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -8.230854034423828,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -7.604747295379639,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    },
+    "two_consecutive": {
+      "0.01": {
+        "threshold": -8.925952911376953,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": -8.014391899108887,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": -7.051121234893799,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    }
+  },
+  "random_score": {
+    "single_low": {
+      "0.01": {
+        "threshold": 0.0023792388383299112,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": 0.010286332108080387,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": 0.023382248356938362,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    },
+    "two_consecutive": {
+      "0.01": {
+        "threshold": 0.05859500542283058,
+        "observed_clean_false_prune_rate": 0.008633093525179856,
+        "n_clean_calibration": 695
+      },
+      "0.05": {
+        "threshold": 0.10439414530992508,
+        "observed_clean_false_prune_rate": 0.04892086330935252,
+        "n_clean_calibration": 695
+      },
+      "0.1": {
+        "threshold": 0.16481508314609528,
+        "observed_clean_false_prune_rate": 0.09928057553956834,
+        "n_clean_calibration": 695
+      }
+    }
+  }
+}

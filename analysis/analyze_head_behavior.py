@@ -82,6 +82,12 @@ def score_cache(head, shard_paths, device, variant="original"):
         step_hidden = shard["step_hidden"].to(device).float()
         step_mask = shard["step_mask"].to(device).bool()
         labels = shard["labels"].to(device).long()
+        # Trajectories longer than the encoder's max_length lost their trailing
+        # step markers, so the cache can carry labels for steps that have no
+        # embedding. Scoring those positions feeds a zero vector to the head and
+        # yields a constant, which silently corrupts every metric. A step without
+        # an embedding is padding, so mark it as such.
+        labels = labels.masked_fill(~step_mask, -100)
         step_hidden, step_mask, labels = apply_perturbation(
             step_hidden, step_mask, labels, variant
         )

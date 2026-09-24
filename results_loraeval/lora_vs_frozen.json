@@ -1,0 +1,79 @@
+{
+  "n_test_trajectories": 2223,
+  "bootstrap_samples": 2000,
+  "seed": 42,
+  "split_seed": 42,
+  "arms": {
+    "lora_linear": {
+      "roc_auc": 0.7991068959236145,
+      "average_precision": 0.7580731511116028,
+      "n_steps": 13807,
+      "roc_auc_ci_low": 0.7840030044317245,
+      "roc_auc_ci_high": 0.8143853768706322,
+      "average_precision_ci_low": 0.7365556642413139,
+      "average_precision_ci_high": 0.779847326874733
+    },
+    "frozen_linear": {
+      "roc_auc": 0.788546085357666,
+      "average_precision": 0.746597170829773,
+      "n_steps": 13807,
+      "roc_auc_ci_low": 0.773868840932846,
+      "roc_auc_ci_high": 0.8029378458857536,
+      "average_precision_ci_low": 0.7273463949561119,
+      "average_precision_ci_high": 0.7666406661272049
+    },
+    "frozen_attention": {
+      "roc_auc": 0.8834397792816162,
+      "average_precision": 0.8643885850906372,
+      "n_steps": 13807,
+      "roc_auc_ci_low": 0.8710254967212677,
+      "roc_auc_ci_high": 0.8958710581064224,
+      "average_precision_ci_low": 0.849476870894432,
+      "average_precision_ci_high": 0.8800413787364959
+    }
+  },
+  "pairwise": [
+    {
+      "arm_a": "lora_linear",
+      "arm_b": "frozen_linear",
+      "roc_auc_diff": 0.010560810565948486,
+      "roc_auc_diff_ci_low": -0.0005266144871711731,
+      "roc_auc_diff_ci_high": 0.02242366075515747,
+      "roc_auc_prob_a_better": 0.97,
+      "roc_auc_significant": false,
+      "average_precision_diff": 0.011475980281829834,
+      "average_precision_diff_ci_low": -0.002480188012123108,
+      "average_precision_diff_ci_high": 0.02542858719825743,
+      "average_precision_prob_a_better": 0.958,
+      "average_precision_significant": false
+    },
+    {
+      "arm_a": "lora_linear",
+      "arm_b": "frozen_attention",
+      "roc_auc_diff": -0.08433288335800171,
+      "roc_auc_diff_ci_low": -0.09708503633737564,
+      "roc_auc_diff_ci_high": -0.07155859768390656,
+      "roc_auc_prob_a_better": 0.0,
+      "roc_auc_significant": true,
+      "average_precision_diff": -0.10631543397903442,
+      "average_precision_diff_ci_low": -0.12315668761730195,
+      "average_precision_diff_ci_high": -0.08933094739913941,
+      "average_precision_prob_a_better": 0.0,
+      "average_precision_significant": true
+    },
+    {
+      "arm_a": "frozen_linear",
+      "arm_b": "frozen_attention",
+      "roc_auc_diff": -0.0948936939239502,
+      "roc_auc_diff_ci_low": -0.1071137547492981,
+      "roc_auc_diff_ci_high": -0.08293602168560028,
+      "roc_auc_prob_a_better": 0.0,
+      "roc_auc_significant": true,
+      "average_precision_diff": -0.11779141426086426,
+      "average_precision_diff_ci_low": -0.1335908442735672,
+      "average_precision_diff_ci_high": -0.10145880281925201,
+      "average_precision_prob_a_better": 0.0,
+      "average_precision_significant": true
+    }
+  ]
+}

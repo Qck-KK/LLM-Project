@@ -1,0 +1,20 @@
+{
+  "head": "cnn",
+  "n_trainable_params": 393601,
+  "seed": 42,
+  "split_seed": 42,
+  "calibration_fraction": 0.5,
+  "epochs": 10,
+  "max_epochs": 10,
+  "best_epoch": 8,
+  "stopped_early": false,
+  "total_train_time_sec": 2298.2994611263275,
+  "peak_mem_mb": 47.164928,
+  "device": "cuda",
+  "final_train_loss": 2.641303852340318,
+  "final_eval_loss": 2.607849499679727,
+  "last_train_loss": 2.639062434170166,
+  "last_eval_loss": 2.66193453131391,
+  "restored": "Reconstructed from the patience=4 run: its first k epochs reproduce the patience=2 run exactly (seed=42, verified epoch-by-epoch). Only wall-clock/peak-memory are carried over from the original measurement.",
+  "timing_exact": true
+}

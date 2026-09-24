@@ -1,0 +1,16 @@
+{
+  "head": "gru",
+  "checkpoint": "checkpoints/gru_head.pt",
+  "step_reward_accuracy": 0.7311636805534363,
+  "step_reward_calibration_accuracy": 0.7341780662536621,
+  "step_reward_threshold": -3.5780370235443115,
+  "step_balanced_accuracy": 0.7315734624862671,
+  "step_roc_auc": 0.8100490570068359,
+  "step_average_precision": 0.7533069252967834,
+  "qvalue_ranking_accuracy": 0.9671223958333334,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2224,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 788225
+}

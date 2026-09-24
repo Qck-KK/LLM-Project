@@ -1,0 +1,15 @@
+{
+  "head": "gru",
+  "checkpoint": "checkpoints/gru_head.pt",
+  "agg": "mean",
+  "single_eval_accuracy": 0.7002463936805725,
+  "single_eval_calibration_accuracy": 0.6924753785133362,
+  "single_eval_threshold": -1.1522948741912842,
+  "single_eval_balanced_accuracy": 0.5391806960105896,
+  "single_eval_roc_auc": 0.6627951860427856,
+  "single_eval_average_precision": 0.4370441436767578,
+  "single_eval_separation": 0.6627950668334961,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

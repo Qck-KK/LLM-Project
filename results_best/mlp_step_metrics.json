@@ -1,0 +1,16 @@
+{
+  "head": "mlp",
+  "checkpoint": "checkpoints/best/mlp_head.pt",
+  "step_reward_accuracy": 0.7583834528923035,
+  "step_reward_calibration_accuracy": 0.7577361464500427,
+  "step_reward_threshold": -3.3912930488586426,
+  "step_balanced_accuracy": 0.7563014030456543,
+  "step_roc_auc": 0.8413884043693542,
+  "step_average_precision": 0.8074451088905334,
+  "qvalue_ranking_accuracy": 0.9543134672374053,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2224,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 262657
+}

@@ -1,0 +1,16 @@
+{
+  "head": "cnn",
+  "checkpoint": "checkpoints/patience4/cnn_head.pt",
+  "step_reward_accuracy": 0.7461432814598083,
+  "step_reward_calibration_accuracy": 0.7561190724372864,
+  "step_reward_threshold": -4.262955665588379,
+  "step_balanced_accuracy": 0.7464796304702759,
+  "step_roc_auc": 0.8279131054878235,
+  "step_average_precision": 0.7874364852905273,
+  "qvalue_ranking_accuracy": 0.957935462627593,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2224,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 393601
+}

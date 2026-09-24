@@ -109,11 +109,20 @@ def collate_fn(batch, tokenizer, max_length=2048):
         max_length=max_length,
     )
 
-    max_steps = max(len(item["labels"]) for item in batch)
+    # Truncation drops trailing step markers, so a long trajectory yields fewer
+    # step embeddings than it has labels. Keeping the full label row would
+    # supervise positions that have no embedding at all (the encoder emits one
+    # vector per surviving marker), so align each row to the markers that
+    # actually survived tokenization.
+    step_token_id = tokenizer.convert_tokens_to_ids("ки")
+    kept_counts = [int((row == step_token_id).sum()) for row in enc["input_ids"]]
+
+    max_steps = max(max(kept_counts), 1)
     labels = torch.full((len(batch), max_steps), -100, dtype=torch.long)
     for i, item in enumerate(batch):
-        n = len(item["labels"])
-        labels[i, :n] = torch.tensor(item["labels"], dtype=torch.long)
+        n = min(len(item["labels"]), kept_counts[i])
+        if n:
+            labels[i, :n] = torch.tensor(item["labels"][:n], dtype=torch.long)
 
     return {
         "input_ids": enc["input_ids"],

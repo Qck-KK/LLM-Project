@@ -30,6 +30,12 @@ def load_step_cache_labels(cache_dir: str):
         shard = torch.load(path, map_location="cpu")
         labels = shard["labels"].long()
         step_mask = shard.get("step_mask", labels != -100).bool()
+        # Trajectories longer than the encoder's max_length lost their trailing
+        # step markers, so the cache can carry labels for steps that have no
+        # embedding. Scoring those positions feeds a zero vector to the head and
+        # yields a constant, which silently corrupts every metric. A step without
+        # an embedding is padding, so mark it as such.
+        labels = labels.masked_fill(~step_mask, -100)
         labels_list.append(labels)
         mask_list.append(step_mask)
 

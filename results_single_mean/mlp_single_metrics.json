@@ -1,0 +1,15 @@
+{
+  "head": "mlp",
+  "checkpoint": "checkpoints/mlp_head.pt",
+  "agg": "mean",
+  "single_eval_accuracy": 0.7031842470169067,
+  "single_eval_calibration_accuracy": 0.696645200252533,
+  "single_eval_threshold": -1.7640964984893799,
+  "single_eval_balanced_accuracy": 0.5350989699363708,
+  "single_eval_roc_auc": 0.66844242811203,
+  "single_eval_average_precision": 0.45208463072776794,
+  "single_eval_separation": 0.66844242811203,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

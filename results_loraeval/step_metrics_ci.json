@@ -1,0 +1,20 @@
+{
+  "cache_dir": "cache/val_lora",
+  "checkpoint_dir": "checkpoints/lora_eval",
+  "n_test_trajectories": 2223,
+  "n_test_steps": 13807,
+  "bootstrap_samples": 2000,
+  "seed": 42,
+  "split_seed": 42,
+  "heads": {
+    "linear": {
+      "roc_auc": 0.7991068959236145,
+      "roc_auc_ci_low": 0.7840030044317245,
+      "roc_auc_ci_high": 0.8143853768706322,
+      "average_precision": 0.7580731511116028,
+      "average_precision_ci_low": 0.7365556642413139,
+      "average_precision_ci_high": 0.779847326874733
+    }
+  },
+  "pairwise": []
+}

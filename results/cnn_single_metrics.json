@@ -1,0 +1,15 @@
+{
+  "head": "cnn",
+  "checkpoint": "checkpoints/cnn_head.pt",
+  "agg": "min",
+  "single_eval_accuracy": 0.6984457969665527,
+  "single_eval_calibration_accuracy": 0.6908642649650574,
+  "single_eval_threshold": -2.8143982887268066,
+  "single_eval_balanced_accuracy": 0.5074740648269653,
+  "single_eval_roc_auc": 0.45395925641059875,
+  "single_eval_average_precision": 0.3024693429470062,
+  "single_eval_separation": 0.45395907759666443,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

@@ -1,0 +1,11 @@
+{
+  "head": "coin_flip",
+  "baseline": "fair_coin",
+  "n_trainable_params": 0,
+  "epochs": 0,
+  "total_train_time_sec": 0.0,
+  "peak_mem_mb": null,
+  "device": "none",
+  "final_train_loss": null,
+  "final_eval_loss": null
+}

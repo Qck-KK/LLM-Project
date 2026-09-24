@@ -17,7 +17,12 @@ from eval.eval_utils import (
     roc_auc,
 )
 from pqm_loss import pqm_loss
-from reward_heads import CNNHead
+from reward_heads import (
+    AttentionPoolingHead,
+    AttentionPoolingPositionHead,
+    CNNHead,
+    LinearHead,
+)
 
 
 class MetricTests(unittest.TestCase):
@@ -42,7 +47,62 @@ class MetricTests(unittest.TestCase):
         self.assertEqual(accuracy, 1.0)
 
 
+class ArchitectureTests(unittest.TestCase):
+    def test_plain_attention_is_permutation_equivariant(self):
+        """Self-attention without positions cannot tell step order apart.
+
+        Documents why `attention` scores exactly 0.0000 ROC-AUC change under the
+        reverse and swap perturbations: permuting the steps merely permutes the
+        outputs, so the (score, label) pairs are unchanged.
+        """
+        torch.manual_seed(0)
+        head = AttentionPoolingHead(hidden_size=32, n_heads=4).eval()
+        step_hidden = torch.randn(1, 5, 32)
+        step_mask = torch.ones(1, 5, dtype=torch.bool)
+        order = torch.tensor([4, 3, 2, 1, 0])
+        with torch.no_grad():
+            straight = head(step_hidden, step_mask)[0]
+            permuted = head(step_hidden[:, order], step_mask[:, order])[0]
+        self.assertTrue(torch.allclose(straight.flip(0), permuted, atol=1e-5))
+
+    def test_positional_attention_is_order_sensitive(self):
+        """The sinusoidal variant must break that equivariance, at equal size."""
+        torch.manual_seed(0)
+        head = AttentionPoolingPositionHead(hidden_size=32, n_heads=4).eval()
+        step_hidden = torch.randn(1, 5, 32)
+        step_mask = torch.ones(1, 5, dtype=torch.bool)
+        order = torch.tensor([4, 3, 2, 1, 0])
+        with torch.no_grad():
+            straight = head(step_hidden, step_mask)[0]
+            permuted = head(step_hidden[:, order], step_mask[:, order])[0]
+        self.assertFalse(torch.allclose(straight.flip(0), permuted, atol=1e-5))
+
+        plain = AttentionPoolingHead(hidden_size=32, n_heads=4)
+        self.assertEqual(sum(p.numel() for p in head.parameters()),
+                         sum(p.numel() for p in plain.parameters()))
+
+
 class StabilityTests(unittest.TestCase):
+    def test_attention_head_survives_all_padded_trajectory(self):
+        """A zero-step trajectory must not turn the whole batch into NaN.
+
+        ~0.1% of cached trajectories have no usable steps. Feeding an all-True
+        key_padding_mask to MultiheadAttention makes softmax return NaN, which
+        the loss mask hides but backward still propagates into every weight.
+        """
+        torch.manual_seed(0)
+        head = AttentionPoolingHead(hidden_size=32, n_heads=4)
+        step_hidden = torch.randn(2, 4, 32)
+        step_mask = torch.tensor([[True, True, False, False],
+                                  [False, False, False, False]])
+        q_values = head(step_hidden, step_mask)
+        self.assertFalse(torch.isnan(q_values).any())
+
+        q_values.sum().backward()
+        for name, param in head.named_parameters():
+            self.assertFalse(torch.isnan(param.grad).any(), f"NaN gradient in {name}")
+
+
     def test_pqm_loss_is_finite_for_extreme_rewards(self):
         rewards = torch.tensor([[1000.0, -1000.0, 0.0]], requires_grad=True)
         labels = torch.tensor([[1, 0, -100]])
@@ -72,6 +132,23 @@ class StabilityTests(unittest.TestCase):
 
 
 class OfflinePruningTests(unittest.TestCase):
+    def test_pointwise_head_causal_scores_equal_full_scores(self):
+        """A pointwise head cannot see the future, so prefix scoring is a no-op.
+
+        Any discrepancy here means the causal/full comparison is measuring a
+        masking artefact rather than the contextual heads' use of later steps.
+        """
+        torch.manual_seed(0)
+        head = LinearHead(hidden_size=16)
+        step_hidden = torch.randn(3, 5, 16)
+        step_mask = torch.tensor([[True, True, True, False, False],
+                                  [True, True, False, False, False],
+                                  [True, True, True, True, True]])
+        causal = causal_prefix_scores(head, step_hidden, step_mask)
+        full = head(step_hidden, step_mask)
+        self.assertTrue(torch.allclose(causal[step_mask], full[step_mask], atol=1e-5))
+
+
     def test_trajectory_types_separate_recovery_cases(self):
         self.assertEqual(classify_trajectory(torch.tensor([1, 1, -100]))["kind"], "clean")
         self.assertEqual(classify_trajectory(torch.tensor([1, 0, 0]))["kind"], "monotone_error")

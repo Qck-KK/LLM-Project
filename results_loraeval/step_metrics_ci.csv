@@ -1,0 +1,2 @@
+head,roc_auc,roc_auc_ci_low,roc_auc_ci_high,average_precision,average_precision_ci_low,average_precision_ci_high
+linear,0.7991068959236145,0.7840030044317245,0.8143853768706322,0.7580731511116028,0.7365556642413139,0.779847326874733

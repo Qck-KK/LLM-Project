@@ -1,0 +1,79 @@
+{
+  "cache_dir": "cache/val_clean",
+  "checkpoint_dir": "checkpoints/seed44",
+  "n_test_trajectories": 2223,
+  "n_test_steps": 13807,
+  "bootstrap_samples": 1000,
+  "seed": 42,
+  "split_seed": 42,
+  "heads": {
+    "attention": {
+      "roc_auc": 0.8687615394592285,
+      "roc_auc_ci_low": 0.8552782073616981,
+      "roc_auc_ci_high": 0.8819706037640571,
+      "average_precision": 0.8412021398544312,
+      "average_precision_ci_low": 0.8228718057274819,
+      "average_precision_ci_high": 0.8592906787991523
+    },
+    "cnn": {
+      "roc_auc": 0.8594838976860046,
+      "roc_auc_ci_low": 0.8471991747617722,
+      "roc_auc_ci_high": 0.8717630535364151,
+      "average_precision": 0.8302595615386963,
+      "average_precision_ci_low": 0.8140300929546356,
+      "average_precision_ci_high": 0.845767293870449
+    },
+    "mlp": {
+      "roc_auc": 0.8486695885658264,
+      "roc_auc_ci_low": 0.8361991912126541,
+      "roc_auc_ci_high": 0.8620335996150971,
+      "average_precision": 0.8174248933792114,
+      "average_precision_ci_low": 0.8017552077770234,
+      "average_precision_ci_high": 0.8338463515043258
+    }
+  },
+  "pairwise": [
+    {
+      "head_a": "attention",
+      "head_b": "cnn",
+      "roc_auc_diff": 0.009277641773223877,
+      "roc_auc_diff_ci_low": 0.0016229242086410523,
+      "roc_auc_diff_ci_high": 0.01702972203493118,
+      "roc_auc_prob_a_better": 0.99,
+      "roc_auc_significant": true,
+      "average_precision_diff": 0.010942578315734863,
+      "average_precision_diff_ci_low": -0.0011655494570732116,
+      "average_precision_diff_ci_high": 0.023340432345867152,
+      "average_precision_prob_a_better": 0.962,
+      "average_precision_significant": false
+    },
+    {
+      "head_a": "attention",
+      "head_b": "mlp",
+      "roc_auc_diff": 0.0200919508934021,
+      "roc_auc_diff_ci_low": 0.012010557949543,
+      "roc_auc_diff_ci_high": 0.0283840149641037,
+      "roc_auc_prob_a_better": 1.0,
+      "roc_auc_significant": true,
+      "average_precision_diff": 0.023777246475219727,
+      "average_precision_diff_ci_low": 0.009982724487781525,
+      "average_precision_diff_ci_high": 0.03624271899461746,
+      "average_precision_prob_a_better": 1.0,
+      "average_precision_significant": true
+    },
+    {
+      "head_a": "cnn",
+      "head_b": "mlp",
+      "roc_auc_diff": 0.010814309120178223,
+      "roc_auc_diff_ci_low": 0.006000392138957977,
+      "roc_auc_diff_ci_high": 0.015562357008457182,
+      "roc_auc_prob_a_better": 1.0,
+      "roc_auc_significant": true,
+      "average_precision_diff": 0.012834668159484863,
+      "average_precision_diff_ci_low": 0.0041597291827201845,
+      "average_precision_diff_ci_high": 0.02170635163784027,
+      "average_precision_prob_a_better": 0.998,
+      "average_precision_significant": true
+    }
+  ]
+}

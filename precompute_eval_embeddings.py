@@ -27,6 +27,9 @@ def main():
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--dtype", default="float16", choices=["float16", "float32"])
     parser.add_argument("--device", default=None)
+    parser.add_argument("--lora_path", default=None,
+                        help="PEFT adapter dir; exports features from the "
+                             "LoRA-adapted encoder instead of the frozen one.")
     args = parser.parse_args()
 
     device = get_device(args.device)
@@ -34,13 +37,23 @@ def main():
     print(f"[precompute_eval] device={device}  cache_dir={args.cache_dir}")
 
     model_dtype = torch.float16 if args.dtype == "float16" and device != "cpu" else torch.float32
-    encoder = FrozenStepEncoder(model_name=args.model_name, dtype=model_dtype).to(device)
+    encoder = FrozenStepEncoder(model_name=args.model_name, dtype=model_dtype)
+    if args.lora_path:
+        # The eval caches must come from the same encoder the head was trained
+        # with, otherwise the LoRA arm is scored on features it never saw.
+        from peft import PeftModel
+        encoder.model = PeftModel.from_pretrained(encoder.model, args.lora_path)
+        encoder.model = encoder.model.merge_and_unload()
+        print("[precompute] merged LoRA adapter from " + args.lora_path)
+    encoder = encoder.to(device)
     encoder.eval()
     with open(os.path.join(args.cache_dir, "hidden_size.txt"), "w") as f:
         f.write(str(encoder.hidden_size))
 
     records = []
-    with open(args.eval_file) as f:
+    # Windows defaults text reads to the locale codec (GBK here), which fails on
+    # any non-ASCII character in the data, so the encoding must be explicit.
+    with open(args.eval_file, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:

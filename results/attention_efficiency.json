@@ -1,0 +1,20 @@
+{
+  "head": "attention",
+  "n_trainable_params": 6433281,
+  "seed": 42,
+  "split_seed": 42,
+  "calibration_fraction": 0.5,
+  "epochs": 6,
+  "max_epochs": 10,
+  "best_epoch": 4,
+  "stopped_early": true,
+  "total_train_time_sec": 1886.0,
+  "peak_mem_mb": 179.6,
+  "device": "cuda",
+  "final_train_loss": 2.797341348599619,
+  "final_eval_loss": 2.688498382141693,
+  "last_train_loss": 2.833287690514536,
+  "last_eval_loss": 2.822002117153552,
+  "restored": "Reconstructed from the patience=4 run: its first k epochs reproduce the patience=2 run exactly (seed=42, verified epoch-by-epoch). Only wall-clock/peak-memory are carried over from the original measurement.",
+  "timing_exact": false
+}

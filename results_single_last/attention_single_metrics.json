@@ -1,0 +1,15 @@
+{
+  "head": "attention",
+  "checkpoint": "checkpoints/attention_head.pt",
+  "agg": "last",
+  "single_eval_accuracy": 0.6974033117294312,
+  "single_eval_calibration_accuracy": 0.689537525177002,
+  "single_eval_threshold": 2.8394908905029297,
+  "single_eval_balanced_accuracy": 0.5028359889984131,
+  "single_eval_roc_auc": 0.6373233795166016,
+  "single_eval_average_precision": 0.4072813391685486,
+  "single_eval_separation": 0.6373233199119568,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

@@ -1,0 +1,25 @@
+{
+  "split_seed": 42,
+  "calibration_fraction": 0.5,
+  "majority": {
+    "accuracy": 0.5620644092559814,
+    "balanced_accuracy": 0.5,
+    "roc_auc": 0.5,
+    "average_precision": 0.43793556094169617,
+    "n_steps": 15210
+  },
+  "position_only": {
+    "accuracy": 0.6158448457717896,
+    "balanced_accuracy": 0.5845277309417725,
+    "roc_auc": 0.6186402440071106,
+    "average_precision": 0.5337115526199341,
+    "n_steps": 15210
+  },
+  "position_bin_calibration_correct_rates": {
+    "0": 0.6495340299350466,
+    "1": 0.4927243330638642,
+    "2": 0.4333593141075604,
+    "3": 0.37227162489894905,
+    "4": 0.35742035742035744
+  }
+}

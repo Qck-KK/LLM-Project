@@ -92,8 +92,14 @@ def main():
         for path in shard_paths:
             shard = torch.load(path, map_location=device)
             step_hidden = shard["step_hidden"].to(device).float()
-            step_mask = shard["step_mask"].to(device)
-            labels = shard["labels"].to(device)
+            step_mask = shard["step_mask"].to(device).bool()
+            labels = shard["labels"].to(device).long()
+    # Trajectories longer than the encoder's max_length lost their trailing
+        # step markers, so the cache can carry labels for steps that have no
+        # embedding. Scoring those positions feeds a zero vector to the head and
+        # yields a constant, which silently corrupts every metric. A step without
+        # an embedding is padding, so mark it as such.
+            labels = labels.masked_fill(~step_mask, -100)
             q = head(step_hidden, step_mask)
             all_q_list.append(q.cpu())
             all_labels_list.append(labels.cpu())

@@ -1,0 +1,16 @@
+{
+  "head": "linear",
+  "checkpoint": "checkpoints/patience4/linear_head.pt",
+  "step_reward_accuracy": 0.713478684425354,
+  "step_reward_calibration_accuracy": 0.7124586701393127,
+  "step_reward_threshold": -3.153285026550293,
+  "step_balanced_accuracy": 0.7140541076660156,
+  "step_roc_auc": 0.7835298776626587,
+  "step_average_precision": 0.7380776405334473,
+  "qvalue_ranking_accuracy": 0.9336516298979256,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2224,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 897
+}

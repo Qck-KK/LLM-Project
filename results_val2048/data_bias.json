@@ -1,0 +1,24 @@
+{
+  "n_trajectories": 4447,
+  "n_calibration_trajectories": 2224,
+  "n_test_trajectories": 2223,
+  "n_steps": 30126,
+  "n_correct_steps": 13593,
+  "n_error_steps": 16533,
+  "correct_rate": 0.45120493925512845,
+  "trajectories_with_positive": 3258,
+  "trajectories_with_negative": 3084,
+  "trajectories_with_both": 1895,
+  "length_min": 1,
+  "length_median": 5.0,
+  "length_mean": 6.774454593658447,
+  "length_max": 37,
+  "first_error_relative_position_mean": 0.30906152061313463,
+  "trajectory_types": {
+    "clean": 1363,
+    "monotone_error": 2636,
+    "recovery": 448
+  },
+  "correct_to_error": 2650,
+  "error_to_correct": 1134
+}
