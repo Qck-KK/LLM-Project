@@ -9,6 +9,11 @@ Expected raw record (Math-Shepherd's public format, one JSON object per line):
   "steps": ["Step 1 text", "Step 2 text", ...],
   "labels": [1, 1, 0, 1, ...]   # 1 = step is correct, 0 = incorrect
 }
+The raw Math-Shepherd release instead stores two strings per record: `input`,
+the solution with a "ки" marker after every step, and `label`, the same text
+with each marker replaced by "+" (correct) or "-" (incorrect). That form is
+converted by `parse_math_shepherd`.
+
 Adjust `_load_raw` if your local copy uses different field names -- the rest
 of the pipeline only depends on the (question, steps, labels) triple.
 """
@@ -17,6 +22,46 @@ import json
 
 import torch
 from torch.utils.data import Dataset
+
+STEP_MARKER = "ки"
+
+
+def parse_math_shepherd(input_text, label_text, marker=STEP_MARKER):
+    """Split a raw Math-Shepherd record into (question, steps, labels).
+
+    Steps are the spans between consecutive markers in `input_text`, so a step
+    whose text runs over several lines -- typically the final
+    "Step k: ...\\n\\n# Answer\\n\\n42" -- stays ONE step with ONE label. The
+    label is the "+"/"-" that `label_text` carries where the marker was.
+
+    Returns None unless `label_text` is exactly `input_text` with every marker
+    replaced by "+" or "-", so a record that does not follow the format is
+    rejected rather than silently mislabelled.
+    """
+    segments = input_text.split(marker)
+    if len(segments) < 2:
+        return None
+    labels, position = [], 0
+    for segment in segments[:-1]:
+        position += len(segment)
+        if position >= len(label_text) or label_text[position] not in "+-":
+            return None
+        labels.append(1 if label_text[position] == "+" else 0)
+        position += 1
+    rebuilt = "".join(
+        segment + ("+" if label == 1 else "-")
+        for segment, label in zip(segments[:-1], labels)
+    ) + segments[-1]
+    if rebuilt != label_text:
+        return None
+
+    first = segments[0]
+    split_at = first.find("Step 1:")
+    if split_at < 0:
+        return None
+    question = first[:split_at].strip()
+    steps = [first[split_at:].strip()] + [s.strip() for s in segments[1:-1]]
+    return {"question": question, "steps": steps, "labels": labels}
 
 
 class MathShepherdStepDataset(Dataset):
@@ -28,6 +73,7 @@ class MathShepherdStepDataset(Dataset):
     @staticmethod
     def _load_raw(path):
         records = []
+        skipped = 0
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
@@ -40,39 +86,17 @@ class MathShepherdStepDataset(Dataset):
                         records.append(obj)
                         continue
 
-                    raw_label_text = obj.get("label", "")
-                    if "Step 1:" not in raw_label_text:
+                    parsed = parse_math_shepherd(obj.get("input", ""), obj.get("label", ""))
+                    if parsed is None:
+                        skipped += 1
                         continue
-
-                    q_part, steps_part = raw_label_text.split("Step 1:", 1)
-                    question = q_part.strip()
-                    step_lines = ("Step 1:" + steps_part).split("\n")
-
-                    steps = []
-                    labels = []
-                    for s_line in step_lines:
-                        s_line = s_line.strip()
-                        if not s_line:
-                            continue
-
-                        if s_line.endswith("+"):
-                            labels.append(1)
-                            steps.append(s_line[:-1].strip())
-                        elif s_line.endswith("-"):
-                            labels.append(0)
-                            steps.append(s_line[:-1].strip())
-                        else:
-                            labels.append(0)
-                            steps.append(s_line)
-
-                    records.append({
-                        "question": question,
-                        "steps": steps,
-                        "labels": labels,
-                    })
+                    records.append(parsed)
                 except json.JSONDecodeError:
+                    skipped += 1
                     continue
 
+        if skipped:
+            print(f"[dataset] skipped {skipped} unparseable records in {path}")
         return records
 
     def __len__(self):

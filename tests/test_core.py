@@ -17,6 +17,7 @@ from eval.eval_utils import (
     deterministic_example_split,
     roc_auc,
 )
+from dataset import parse_math_shepherd
 from eval.eval_bon import majority_choice, weighted_vote_choice
 from pqm_loss import bce_step_loss, pqm_loss
 from reward_heads import (
@@ -47,6 +48,29 @@ class MetricTests(unittest.TestCase):
         labels = torch.ones(4, dtype=torch.long)
         _, accuracy = best_threshold_accuracy(scores, labels)
         self.assertEqual(accuracy, 1.0)
+
+
+class ParserTests(unittest.TestCase):
+    def test_multiline_final_step_is_one_step_with_one_label(self):
+        """The '# Answer' block must not become extra (negative) steps."""
+        question = "What is 2+2?"
+        body = " Step 1: Add them. {0}\nStep 2: So it is 4.\n\n# Answer\n\n4 {1}\n"
+        record = parse_math_shepherd(question + body.format("ки", "ки"),
+                                     question + body.format("+", "+"))
+        self.assertEqual(record["question"], question)
+        self.assertEqual(record["labels"], [1, 1])
+        self.assertEqual(record["steps"][1], "Step 2: So it is 4.\n\n# Answer\n\n4")
+
+    def test_labels_follow_marker_positions(self):
+        text = "Q? Step 1: a {0}\nStep 2: b {1}\nStep 3: c {2}\n"
+        record = parse_math_shepherd(text.format("ки", "ки", "ки"), text.format("+", "-", "-"))
+        self.assertEqual(record["labels"], [1, 0, 0])
+        self.assertEqual(record["steps"], ["Step 1: a", "Step 2: b", "Step 3: c"])
+
+    def test_mismatched_label_text_is_rejected(self):
+        self.assertIsNone(parse_math_shepherd("Q? Step 1: a ки\n", "Q? Step 1: b +\n"))
+        self.assertIsNone(parse_math_shepherd("Q? Step 1: a ки\n", "Q? Step 1: a x\n"))
+        self.assertIsNone(parse_math_shepherd("Q? no markers\n", "Q? no markers\n"))
 
 
 class MultipleComparisonTests(unittest.TestCase):
