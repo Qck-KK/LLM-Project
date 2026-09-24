@@ -1,5 +1,12 @@
 # Lightweight PRM Reward Heads on a Frozen Encoder
 
+> **Results are being regenerated.** A parsing bug in `dataset.py` split
+> multi-line Math-Shepherd steps into extra steps labelled as errors: 13.5% of
+> error labels were spurious and 17% of fully correct trajectories were marked
+> as containing an error. The bug is fixed and every experiment is being rerun
+> on re-encoded caches (`run_experiments.py` -> `results_final/`). The numbers
+> below come from the mislabelled data (`results_conv/`) and will be replaced.
+
 Trains five lightweight reward heads on top of a frozen Qwen2.5-0.5B step
 encoder with the PQM comparative ranking loss, and asks which head architecture
 is worth the parameters. The heads split into pointwise (`linear`, `mlp`) and
