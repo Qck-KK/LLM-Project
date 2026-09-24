@@ -1,0 +1,16 @@
+{
+  "head": "linear",
+  "threshold": -3.5337066650390625,
+  "calibration_accuracy": 0.7165012955665588,
+  "n_trajectories": 2223,
+  "n_steps": 13807,
+  "accuracy": 0.7131165266036987,
+  "balanced_accuracy": 0.7127146124839783,
+  "roc_auc": 0.788546085357666,
+  "average_precision": 0.746597170829773,
+  "ranking_accuracy": 0.9475633849193282,
+  "first_error_boundary_drop": 0.7906485426115705,
+  "matched_correct_boundary_drop": 0.27019167366031926,
+  "position_controlled_boundary_effect": 0.5204568689512512,
+  "n_error_boundaries": 879
+}
