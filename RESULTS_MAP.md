@@ -30,8 +30,8 @@ superseded run kept for the record, or a sensitivity/robustness check.
 | Directory | Question it answers |
 |---|---|
 | `results_lrsweep/` | Does the learning rate matter more than the architecture? Full 6 heads x {1e-3, 3e-4, 1e-4} grid. **This is where the original conclusions broke.** |
-| `results_patience4/`, `results_p4_eval/` | Was the ranking an artefact of `patience=2` early stopping? (No.) |
-| `results_seeds/`, `results_seedeval/` | Is the ranking stable across random seeds? Three seeds for attention/cnn/mlp. (Yes; ranges do not overlap.) |
+| `results_patience4/`, `results_p4_eval/` | Was the ranking an artefact of `patience=2` early stopping? (No -- but tested at `lr=1e-3`, 10 epochs, i.e. on the superseded ranking.) |
+| `results_seeds/`, `results_seedeval/` | Is the ranking stable across random seeds? Three seeds for attention/cnn/mlp at `lr=1e-4` with a 10-epoch cap. (Yes; ranges do not overlap. Not rerun under the converged 30-epoch protocol.) |
 | `results_long/` | Does the 10-epoch budget truncate the largest head? `attention @ 1e-4` for 30 epochs. (Yes, by 0.094 dev loss; best epoch 20.) |
 | `results_val2048/` | Does the ~9% of steps lost to `max_length=512` truncation change anything? Re-encoded validation set at 2048. (No.) |
 | `results_lora_full/`, `results_loraeval/` | Is the frozen-encoder premise costing anything, and is the Best-of-N failure caused by freezing? LoRA on the full 440k for one epoch. (No and no.) |

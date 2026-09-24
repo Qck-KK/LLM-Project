@@ -720,6 +720,14 @@ python -m analysis.bootstrap_causal_metrics   --results_dir results --heads line
 
 `bootstrap_causal_metrics` 复用 `analyze_offline_pruning` 已存的 causal predictions，零前向开销。
 
+六个头两两比较是每个指标 15 次检验，逐个看区间是否跨 0 会放大假阳性。用 Holm 校正控制族错误率（只读上面两个 pairwise CSV，不需要模型或缓存）：
+
+```bash
+python -m analysis.holm_correction   results/step_metrics_ci_pairwise.csv results/causal_metrics_ci_pairwise.csv   --bootstrap_samples 2000
+```
+
+输出同名的 `*_pairwise_holm.csv`，原文件不变。
+
 输出：`step_metrics_ci.json` / `.csv` / `_pairwise.csv`、`causal_metrics_ci.json`。
 
 ## 14C. 实验十三：Best-of-N 重排序
@@ -786,6 +794,8 @@ done
 
 判据是**区间是否重叠**，而不是点估计谁高。实测三个头的 AUC 区间两两不重叠，
 架构差距是种子标准差的 3.5–5.5 倍。
+
+注意这两项检查都不是在现行协议下做的：patience 检查用的是作废的 `lr=1e-3`，只能说明旧排名不是 patience 造成的；种子检查用的是 `lr=1e-4` 但只有 10 epochs，6 次中有 5 次在第 10 轮取到最佳，尚未收敛。因此它们支持的是 10 轮预算下的排名，而不是 `results_conv/` 中收敛后的数字。
 
 ## 15. 使用 Notebook 一次执行完整流程
 

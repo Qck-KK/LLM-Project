@@ -29,7 +29,9 @@ epochs and `lr=1e-4`:
 | *position-only baseline* | 0 | *0.6251* |
 | *majority baseline* | 0 | *0.5000* |
 
-13 of the 15 pairwise differences are significant; `{attention, attention_pe}`
+13 of the 15 pairwise differences are significant, and all 13 survive a Holm-Bonferroni
+correction across the 15 comparisons (Average Precision: likewise 13 of 15,
+all surviving); `{attention, attention_pe}`
 and `{gru, cnn}` are the two indistinguishable groups. Every head clears the
 position-only baseline by a wide margin, so the frozen representation does carry
 step-correctness signal rather than step position.
@@ -51,7 +53,8 @@ online early-exit policy actually faces -- removes most of the gap:
 Under causal scoring `attention`, `mlp` and `gru` are statistically
 indistinguishable, and `cnn` -- the head that led under the original protocol --
 falls significantly below the 897-parameter linear head. The exactly-zero
-penalty for the pointwise heads is an invariant, asserted in the test suite.
+penalty for the pointwise heads is an invariant, asserted in the test suite. All
+12 significant causal comparisons also survive Holm correction.
 
 **None of it transfers to the task a PRM is for.** Reranking 16 Qwen2.5-0.5B
 candidates per GSM8K question (1,319 questions, question-level bootstrap):
@@ -98,10 +101,18 @@ superseded result directories are kept rather than overwritten.
 * **The LoRA arm is not compute-matched** (1 epoch against the frozen arms' 30).
   The handicap favours the frozen arms, which makes "LoRA shows no gain"
   conservative and a LoRA loss ambiguous.
-* **Single seed for most runs.** Three seeds were run for `attention`, `cnn` and
-  `mlp`: the AUC ranges do not overlap and the architecture gaps are 3.5-5.5x
-  the seed standard deviation, so the ranking is seed-robust, but the other
-  heads rest on one seed each.
+* **Single seed for most runs, and the seed check predates the final
+  protocol.** Three seeds were run for `attention`, `cnn` and `mlp`: the AUC
+  ranges do not overlap and the architecture gaps are 3.5-5.5x the seed
+  standard deviation. Those runs used `lr=1e-4` but the earlier 10-epoch cap,
+  and five of the six picked epoch 10, so they had not converged. The check
+  therefore supports the ranking at a 10-epoch budget, not the converged
+  30-epoch numbers above, and the other three heads rest on one seed each.
+* **The early-stopping check was run under the superseded protocol.** Raising
+  patience from 2 to 4 did not change the ranking (`results_patience4/`), but
+  that run used `lr=1e-3` and 10 epochs. It shows the *original* ranking was not
+  a patience artefact; it says nothing direct about the final one, which uses
+  patience 5 over 30 epochs.
 * **`max_length=512` truncation.** About 9% of steps (concentrated in long
   trajectories, 80% of them error steps) are not encoded. Re-encoding the
   validation set at 2048 moved every head by +0.007 to +0.009 AUC and changed no
@@ -140,6 +151,8 @@ Analysis (`analysis/`):
 - `analyze_offline_pruning.py` — causal-prefix scoring and risk-budgeted pruning
 - `bootstrap_step_metrics.py`, `bootstrap_causal_metrics.py` — paired
   trajectory-level confidence intervals
+- `holm_correction.py` — Holm-Bonferroni correction over those pairwise
+  comparisons, from the CSVs they already wrote
 - `compare_lora_frozen.py` — paired comparison across two encoders' caches
 
 Run evaluation and analysis as modules from the repository root, for example
@@ -154,7 +167,7 @@ python -m unittest discover -v
 
 `TRAINING_WORKFLOW.md` is the step-by-step manual. `RESULTS_MAP.md` says which
 result directory answers which question; read `results_conv/` for the final
-numbers. Four of the fourteen tests are invariants rather than unit tests --
+numbers. Four of the eighteen tests are invariants rather than unit tests --
 pointwise heads must score prefixes and full trajectories identically, plain
 attention must be permutation equivariant — and two of them exist because the
 corresponding bug had already corrupted a published conclusion.

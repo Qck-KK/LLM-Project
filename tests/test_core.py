@@ -10,6 +10,7 @@ from analysis.analyze_offline_pruning import (
     classify_trajectory,
     stopping_index,
 )
+from analysis.holm_correction import bootstrap_p_value, holm_adjust
 from eval.eval_utils import (
     average_precision,
     best_threshold_accuracy,
@@ -45,6 +46,24 @@ class MetricTests(unittest.TestCase):
         labels = torch.ones(4, dtype=torch.long)
         _, accuracy = best_threshold_accuracy(scores, labels)
         self.assertEqual(accuracy, 1.0)
+
+
+class MultipleComparisonTests(unittest.TestCase):
+    def test_holm_matches_hand_computed_values(self):
+        # sorted: 0.005*4=0.02, 0.01*3=0.03, 0.03*2=0.06, 0.04*1=0.04 -> 0.06
+        adjusted = holm_adjust([0.01, 0.04, 0.03, 0.005])
+        for got, expected in zip(adjusted, [0.03, 0.06, 0.06, 0.02]):
+            self.assertAlmostEqual(got, expected)
+
+    def test_holm_ignores_nan_in_family_size(self):
+        adjusted = holm_adjust([0.02, float("nan")])
+        self.assertAlmostEqual(adjusted[0], 0.02)
+        self.assertTrue(adjusted[1] != adjusted[1])
+
+    def test_bootstrap_p_value_is_floored_and_two_sided(self):
+        self.assertAlmostEqual(bootstrap_p_value(0.0, 2000), 2 / 2001)
+        self.assertAlmostEqual(bootstrap_p_value(1.0, 2000), 2 / 2001)
+        self.assertEqual(bootstrap_p_value(0.5, 2000), 1.0)
 
 
 class ArchitectureTests(unittest.TestCase):
@@ -117,6 +136,16 @@ class StabilityTests(unittest.TestCase):
         loss = pqm_loss(rewards, labels)
         self.assertTrue(torch.isfinite(loss))
         self.assertEqual(float(loss.detach()), 0.0)
+
+    def test_pqm_loss_excludes_unsupervised_example_from_batch_mean(self):
+        """An all-padding row must neither poison nor dilute the other rows."""
+        torch.manual_seed(0)
+        rewards = torch.randn(2, 3)
+        labels = torch.tensor([[1, 0, -100], [-100, -100, -100]])
+        batch_loss = pqm_loss(rewards, labels)
+        alone_loss = pqm_loss(rewards[:1], labels[:1])
+        self.assertTrue(torch.isfinite(batch_loss))
+        self.assertAlmostEqual(float(batch_loss), float(alone_loss), places=6)
 
     def test_cnn_valid_outputs_ignore_padded_values(self):
         torch.manual_seed(0)
