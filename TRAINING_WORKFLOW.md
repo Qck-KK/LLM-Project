@@ -36,7 +36,7 @@
         ↓
 数据与位置偏差审计
         ↓
-训练 Linear / MLP / CNN / BiGRU / Attention
+训练 Linear / MLP / CNN / BiGRU / Attention / Attention-PE
         ↓
 检查 train/development loss 与最佳 epoch
         ↓
@@ -272,7 +272,7 @@ results/deterministic_baselines.json
 
 这一实验首先回答：后续模型是否只是利用“越靠后越容易错误”的数据规律。
 
-## 6. 实验二：训练五种轻量 Reward Head
+## 6. 实验二：训练六种轻量 Reward Head
 
 训练模型：
 
@@ -280,9 +280,10 @@ results/deterministic_baselines.json
 - MLP；
 - CNN；
 - BiGRU；
-- Attention。
+- Attention；
+- Attention + 正弦位置编码（`attention_pe`，在扰动实验发现无位置编码的 attention 置换等变后加入）。
 
-五个模型必须使用完全相同的：
+六个模型必须使用完全相同的：
 
 - train cache；
 - development 切分；
@@ -295,13 +296,13 @@ results/deterministic_baselines.json
 运行：
 
 ```bash
-for head in linear mlp cnn gru attention; do
+for head in linear mlp cnn gru attention attention_pe; do
   python train_from_cache.py \
     --cache_dir cache/train \
     --val_cache_dir cache/val \
     --head "$head" \
-    --epochs 10 \
-    --early_stopping_patience 2 \
+    --epochs 30 \
+    --early_stopping_patience 5 \
     --seed 42 \
     --calibration_fraction 0.5 \
     --split_seed 42 \
@@ -333,7 +334,7 @@ results/{head}_loss_curve.png
 其中：
 
 - `epochs`：实际运行的 epoch 数；
-- `max_epochs`：最大值 10；
+- `max_epochs`：最大值 30；
 - `best_epoch`：最终保留 checkpoint 对应的 epoch；
 - `stopped_early`：是否触发早停；
 - `final_train_loss`：最佳 epoch 的训练 loss；
@@ -365,7 +366,7 @@ results/{head}_efficiency.json
 ## 8. 实验四：Held-out Step-level 标准评估
 
 ```bash
-for head in linear mlp cnn gru attention; do
+for head in linear mlp cnn gru attention attention_pe; do
   python -m eval.eval_step_metrics \
     --cache_dir cache/val \
     --head "$head" \
@@ -409,7 +410,7 @@ results/{head}_step_metrics.json
 如果存在 `cache/single_eval`：
 
 ```bash
-for head in linear mlp cnn gru attention; do
+for head in linear mlp cnn gru attention attention_pe; do
   python -m eval.eval_single_from_cache \
     --cache_dir cache/single_eval \
     --head "$head" \
@@ -483,7 +484,7 @@ python -m analysis.analyze_head_behavior \
   --cache_dir cache/val \
   --checkpoint_dir checkpoints \
   --results_dir results \
-  --heads linear mlp cnn gru attention \
+  --heads linear mlp cnn gru attention attention_pe \
   --calibration_fraction 0.5 \
   --split_seed 42
 ```
@@ -557,7 +558,7 @@ python -m analysis.analyze_head_behavior \
   --cache_dir cache/val \
   --checkpoint_dir checkpoints \
   --results_dir results \
-  --heads linear mlp cnn gru attention \
+  --heads linear mlp cnn gru attention attention_pe \
   --calibration_fraction 0.5 \
   --split_seed 42 \
   --run_perturbations
@@ -608,7 +609,7 @@ python -m analysis.analyze_offline_pruning \
   --cache_dir cache/val \
   --checkpoint_dir checkpoints \
   --results_dir results \
-  --heads linear mlp cnn gru attention \
+  --heads linear mlp cnn gru attention attention_pe \
   --budgets 0.01 0.05 0.10 \
   --primary_budget 0.05 \
   --primary_policy single_low \
@@ -799,7 +800,7 @@ Notebook 已按本手册顺序组织：
 1. 设置 cache、checkpoint、results 路径；
 2. 检查 cache；
 3. 数据与位置偏差审计；
-4. 训练五种 head；
+4. 训练六种 head；
 5. 展示 loss 曲线；
 6. step-level held-out 评估；
 7. 分层、首错边界和扰动分析；
@@ -811,15 +812,16 @@ Notebook 已按本手册顺序组织：
 默认配置：
 
 ```python
-EPOCHS = 10
+LR = 1e-4
+EPOCHS = 30
 SEED = 42
-EARLY_STOPPING_PATIENCE = 2
+EARLY_STOPPING_PATIENCE = 5
 CALIBRATION_FRACTION = 0.5
 RUN_PERTURBATIONS = True
-HEADS = ["linear", "mlp", "cnn", "gru", "attention"]
+HEADS = ["linear", "mlp", "cnn", "gru", "attention", "attention_pe"]
 ```
 
-Notebook 默认不会重新生成 embedding cache。
+Notebook 默认不会重新生成 embedding cache，结果写入 `results_rerun/`，不会覆盖 `results/`（旧协议记录）或 `results_conv/`（最终结果）。
 
 ## 16. 最终报告的推荐顺序
 
@@ -829,7 +831,7 @@ Notebook 默认不会重新生成 embedding cache。
 2. 数据概况：标签比例、轨迹长度、首错位置和位置偏差；
 3. 基线：majority、position-only、coin-flip；
 4. 训练过程：统一 30 epochs 上限、patience=5 早停和最佳 checkpoint；
-5. 总体表现：五个 head 的 held-out ROC-AUC、AP 和 ranking accuracy；
+5. 总体表现：六个 head 的 held-out ROC-AUC、AP 和 ranking accuracy；
 6. 单步语义：Linear/MLP 是否超过位置基线；
 7. 上下文价值：CNN/BiGRU/Attention 是否超过 pointwise head；
 8. 能力来源：长度、首错位置和错误数量分层；

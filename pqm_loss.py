@@ -4,13 +4,22 @@ pqm_loss.py
 Stage 3: PQM Comparative Ranking Loss (Eq. 10 of the PQM paper,
 "Process Reward Model with Q-Value Rankings", Li & Li, ICLR 2025).
 
-This is a re-typed, lightly-commented version of the OFFICIAL implementation
+This is a re-typed, commented version of the OFFICIAL implementation
 released by the authors at:
     https://github.com/WindyLee0822/Process_Q_Model
 
-I'm keeping the logic byte-for-byte identical to the official release (only
-adding comments) so your results stay comparable to the numbers reported in
-the paper / used as your Baseline B.
+The ranking objective is the official one. Two numerical-safety changes were
+made on top of it, and neither changes the loss in the normal regime:
+
+1. Rewards are clamped to [-50, 50] before exp(), and reward + zeta is clamped
+   at 50. The loss is therefore identical whenever |reward| <= 50 - zeta; beyond
+   that the official expression overflows to inf.
+2. An example with no supervised position (no correct step and no incorrect
+   step) is excluded from the batch mean. The official per-example average
+   divides 0 by 0 there and turns the whole batch loss into NaN. A batch with no
+   supervised position at all returns a zero loss that keeps the graph attached.
+
+Both behaviours are covered by tests/test_core.py.
 
 Intuition: for each correct step i, this loss wants Q(step_i) to be ranked
 above (a) all incorrect steps in the trajectory (with a margin `zeta`), and
