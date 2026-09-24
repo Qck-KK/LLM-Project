@@ -81,6 +81,25 @@ def pqm_loss(rewards: torch.Tensor, labels: torch.Tensor, zeta: float = 4.0) -> 
     return per_example[valid_examples].mean()
 
 
+def bce_step_loss(rewards: torch.Tensor, labels: torch.Tensor, zeta: float = 4.0) -> torch.Tensor:
+    """Pointwise step-classification baseline that PQM argues against.
+
+    Each labelled step is an independent binary target and the reward is its
+    logit (Math-Shepherd-style PRM training). Averaged over every labelled step
+    in the batch. `zeta` is accepted only so both losses share one signature;
+    it has no role here.
+    """
+    valid = (labels == 0) | (labels == 1)
+    if not valid.any():
+        return rewards.sum() * 0.0
+    return torch.nn.functional.binary_cross_entropy_with_logits(
+        rewards[valid], labels[valid].to(rewards.dtype)
+    )
+
+
+LOSSES = {"pqm": pqm_loss, "bce": bce_step_loss}
+
+
 def build_labels_from_mask(step_correctness: torch.Tensor, step_mask: torch.Tensor) -> torch.Tensor:
     """
     Helper to build the `labels` tensor pqm_loss expects, from:

@@ -131,14 +131,18 @@ Core pipeline:
 - `dataset.py` — Math-Shepherd loader; `collate_fn` aligns labels to the step
   markers that survive tokenization
 - `reward_heads.py` — the six heads behind one interface
-- `pqm_loss.py` — PQM comparative ranking loss
-- `train_from_cache.py` — trains a head from cached embeddings
+- `pqm_loss.py` — PQM comparative ranking loss, plus the pointwise step-BCE
+  baseline it is compared against
+- `train_from_cache.py` — trains a head from cached embeddings (`--loss pqm|bce`)
 - `train_lora.py` — the LoRA arm: adapters on the encoder plus a value head
+- `run_extra_experiments.py` — resumable driver for the follow-up ablations
+  (final-protocol seeds, PQM vs BCE, zeta, `lr=3e-5`) and their evaluation
 
 Evaluation (`eval/`):
 
 - `eval_step_metrics.py` — held-out step metrics
-- `eval_bon.py` — Best-of-N against majority voting and an oracle
+- `eval_bon.py` — Best-of-N (argmax and PRM-weighted voting) against majority
+  voting and an oracle, with paired differences to majority voting
 - `eval_single_from_cache.py` — single-solution scoring from a dedicated cache
 - `eval_single_from_step_cache.py` — the in-distribution single-solution control
 - `eval_coin_flip_baseline.py`, `summarize_results.py`
@@ -153,7 +157,8 @@ Analysis (`analysis/`):
   trajectory-level confidence intervals
 - `holm_correction.py` — Holm-Bonferroni correction over those pairwise
   comparisons, from the CSVs they already wrote
-- `compare_lora_frozen.py` — paired comparison across two encoders' caches
+- `compare_lora_frozen.py` — paired comparison of arms that may use different
+  caches or checkpoints (LoRA vs frozen, and the loss / zeta / lr / seed ablations)
 
 Run evaluation and analysis as modules from the repository root, for example
 `python -m eval.eval_step_metrics ...`.
@@ -167,7 +172,7 @@ python -m unittest discover -v
 
 `TRAINING_WORKFLOW.md` is the step-by-step manual. `RESULTS_MAP.md` says which
 result directory answers which question; read `results_conv/` for the final
-numbers. Four of the eighteen tests are invariants rather than unit tests --
+numbers. Four of the twenty-two tests are invariants rather than unit tests --
 pointwise heads must score prefixes and full trajectories identically, plain
 attention must be permutation equivariant — and two of them exist because the
 corresponding bug had already corrupted a published conclusion.

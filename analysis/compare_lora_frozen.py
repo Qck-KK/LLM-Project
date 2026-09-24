@@ -1,4 +1,8 @@
-"""Paired comparison of the LoRA arm against the frozen arms.
+"""Paired comparison of reward-head arms that may live in different caches.
+
+Written for the LoRA arm against the frozen arms, and reused for the ablations
+that differ only in how a head was trained (loss, zeta, learning rate, seed):
+each arm is NAME:CACHE:HEAD:CKPT, and `--out_name` keeps the outputs apart.
 
 The two arms live in different caches -- the LoRA encoder produces different step
 features -- so `analysis.bootstrap_step_metrics` cannot pair them in one pass.
@@ -74,6 +78,8 @@ def main():
                         help="Repeatable. Example: "
                              "frozen_linear:cache/val_clean:linear:checkpoints/long30/linear_head.pt")
     parser.add_argument("--results_dir", required=True)
+    parser.add_argument("--out_name", default="lora_vs_frozen",
+                        help="Output file stem; any set of arms can be compared, not only LoRA.")
     parser.add_argument("--bootstrap_samples", type=int, default=2000)
     parser.add_argument("--calibration_fraction", type=float, default=0.5)
     parser.add_argument("--split_seed", type=int, default=42)
@@ -139,7 +145,8 @@ def main():
 
     summary = {"n_test_trajectories": int(n_test),
                "bootstrap_samples": args.bootstrap_samples,
-               "seed": args.seed, "split_seed": args.split_seed, "arms": {}}
+               "seed": args.seed, "split_seed": args.split_seed,
+               "arm_specs": args.arm, "arms": {}}
     for name in arms:
         entry = dict(point[name])
         for metric in ("roc_auc", "average_precision"):
@@ -167,11 +174,11 @@ def main():
             pairs.append(row)
     summary["pairwise"] = pairs
 
-    out_json = os.path.join(args.results_dir, "lora_vs_frozen.json")
+    out_json = os.path.join(args.results_dir, args.out_name + ".json")
     with open(out_json, "w") as f:
         json.dump(summary, f, indent=2)
     if pairs:
-        with open(os.path.join(args.results_dir, "lora_vs_frozen_pairwise.csv"),
+        with open(os.path.join(args.results_dir, args.out_name + "_pairwise.csv"),
                   "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=list(pairs[0].keys()))
             writer.writeheader()

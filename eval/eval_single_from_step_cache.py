@@ -151,6 +151,7 @@ def main():
     out_json = os.path.join(args.results_dir, "single_indist_metrics.json")
     with open(out_json, "w") as f:
         json.dump({"cache_dir": args.cache_dir,
+                   "checkpoint_dir": args.checkpoint_dir,
                    "split_seed": args.split_seed,
                    "calibration_fraction": args.calibration_fraction,
                    "bootstrap_samples": args.bootstrap_samples,

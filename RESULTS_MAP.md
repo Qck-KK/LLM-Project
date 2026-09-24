@@ -23,6 +23,7 @@ superseded run kept for the record, or a sensitivity/robustness check.
 | `results_best/` | Six heads at their best lr from the grid, 10 epochs. Intermediate step between `results/` and `results_conv/`. |
 | `results_attnpe/` | First `attention_pe` arm, `lr=1e-3` only. Superseded once the sweep covered it. |
 | `results_single_mean/`, `results_single_last/` | Single-solution evaluation under the `mean` and `last` aggregations (the `min` default lands in `results/`). |
+| `results/single_indist_metrics.*` | First in-distribution single-solution control, computed on `cache/val_2048` without recording which checkpoints it used. Superseded by the rerun on `cache/val_clean` with `checkpoints/long30` into `results_conv/` (`run_extra_experiments.py --only eval`). |
 | `results_sub10/` | Frozen heads trained on the 10% subset. Built for a scaled-down LoRA comparison that was replaced by the full-data one. |
 
 ## Sensitivity and robustness checks

@@ -7,7 +7,7 @@ so it should be dramatically faster than training through the encoder.
 
 Usage:
     python train_from_cache.py --cache_dir cache/math_shepherd_qwen05b \
-        --head mlp --epochs 10 --save_path checkpoints/mlp_head.pt
+        --head mlp --epochs 30 --lr 1e-4 --early_stopping_patience 5 --save_path checkpoints/mlp_head.pt
 
 Repeat with --head cnn / gru / attention / linear to sweep all architectures
 against the SAME cached embeddings -- this is the controlled comparison the
@@ -25,7 +25,7 @@ import torch
 
 from eval.eval_utils import HEAD_CHOICES, deterministic_example_split, get_device
 from reward_heads import build_reward_head
-from pqm_loss import pqm_loss
+from pqm_loss import LOSSES
 
 
 def load_shard(path, device):
@@ -38,7 +38,7 @@ def load_shard(path, device):
 
 
 @torch.no_grad()
-def evaluate_loss(head, shard_paths, device, zeta, example_mask=None):
+def evaluate_loss(head, shard_paths, device, zeta, example_mask=None, loss_fn=LOSSES["pqm"]):
     if not shard_paths:
         return None
     head.eval()
@@ -57,7 +57,7 @@ def evaluate_loss(head, shard_paths, device, zeta, example_mask=None):
             labels = labels[selected]
         q_values = head(step_hidden, step_mask)
         batch_size = step_hidden.shape[0]
-        running_loss += pqm_loss(q_values, labels, zeta=zeta).item() * batch_size
+        running_loss += loss_fn(q_values, labels, zeta=zeta).item() * batch_size
         n_examples += batch_size
     return running_loss / max(n_examples, 1)
 
@@ -79,7 +79,7 @@ def save_loss_plot(history, out_path):
     if any(v is not None for v in history["eval_loss"]):
         plt.plot(epochs, history["eval_loss"], marker="o", label="evaluation loss")
     plt.xlabel("Epoch")
-    plt.ylabel("PQM loss")
+    plt.ylabel(history.get("loss", "pqm").upper() + " loss")
     plt.title(f"{history['head']} reward head loss")
     plt.grid(alpha=0.25)
     plt.legend()
@@ -95,9 +95,11 @@ def main():
     parser.add_argument("--val_cache_dir", default=None,
                          help="Optional validation cache for epoch-level evaluation loss.")
     parser.add_argument("--head", required=True, choices=HEAD_CHOICES)
-    parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--epochs", type=int, default=30)
+    parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--zeta", type=float, default=4.0)
+    parser.add_argument("--loss", choices=sorted(LOSSES), default="pqm",
+                        help="pqm: comparative ranking loss; bce: pointwise step BCE baseline.")
     parser.add_argument("--device", default=None)
     parser.add_argument("--save_path", default="checkpoints/head.pt")
     parser.add_argument("--results_dir", default=None,
@@ -105,7 +107,7 @@ def main():
     parser.add_argument("--loss_history_path", default=None)
     parser.add_argument("--loss_plot_path", default=None)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--early_stopping_patience", type=int, default=2,
+    parser.add_argument("--early_stopping_patience", type=int, default=5,
                         help="Stop after this many non-improving validation epochs; 0 disables it.")
     parser.add_argument("--early_stopping_min_delta", type=float, default=0.0,
                         help="Minimum absolute validation-loss improvement.")
@@ -152,6 +154,7 @@ def main():
     n_trainable = sum(p.numel() for p in head.parameters() if p.requires_grad)
     print(f"[train] trainable params: {n_trainable:,}")
 
+    loss_fn = LOSSES[args.loss]
     optimizer = torch.optim.AdamW(head.parameters(), lr=args.lr)
 
     if device == "cuda":
@@ -160,6 +163,10 @@ def main():
     history = {
         "head": args.head,
         "seed": args.seed,
+        "loss": args.loss,
+        "lr": args.lr,
+        "zeta": args.zeta,
+        "early_stopping_patience": args.early_stopping_patience,
         "max_epochs": args.epochs,
         "epoch": [],
         "train_loss": [],
@@ -183,7 +190,7 @@ def main():
             step_hidden, step_mask, labels = load_shard(path, device)
 
             q_values = head(step_hidden, step_mask)
-            loss = pqm_loss(q_values, labels, zeta=args.zeta)
+            loss = loss_fn(q_values, labels, zeta=args.zeta)
 
             optimizer.zero_grad()
             loss.backward()
@@ -204,7 +211,7 @@ def main():
         dt = time.time() - t0
         train_loss = running_loss / max(n_examples, 1)
         eval_loss = evaluate_loss(
-            head, val_shard_paths, device, args.zeta, validation_calibration_mask
+            head, val_shard_paths, device, args.zeta, validation_calibration_mask, loss_fn
         )
         history["epoch"].append(epoch + 1)
         history["train_loss"].append(train_loss)
@@ -259,6 +266,12 @@ def main():
             "head": args.head,
             "n_trainable_params": n_trainable,
             "seed": args.seed,
+            "loss": args.loss,
+            "lr": args.lr,
+            "zeta": args.zeta,
+            "early_stopping_patience": args.early_stopping_patience,
+            "cache_dir": args.cache_dir,
+            "val_cache_dir": args.val_cache_dir,
             "split_seed": args.split_seed,
             "calibration_fraction": args.calibration_fraction,
             "epochs": len(history["epoch"]),

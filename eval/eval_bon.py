@@ -14,6 +14,17 @@ Two reference points frame every head:
 * `oracle` : correct if ANY of the k candidates is correct. The ceiling that
   reranking could reach with a perfect scorer.
 
+Each head is used in two ways (column `method`):
+
+* `argmax`: keep the single highest-scoring candidate (plain Best-of-N).
+* `weighted_vote`: PRM-weighted self-consistency -- every candidate votes for
+  its final answer with weight sigmoid(score), and the answer with the largest
+  total wins. This is the usual way a PRM is combined with majority voting, so
+  it is the fairer test of whether the reward adds anything on top of it.
+
+Every row also carries its paired difference to `majority_vote`, bootstrapped
+over the same question resamples.
+
 For k < N each question is evaluated over several random subsets of its 16
 candidates, so the curve does not depend on the arbitrary generation order.
 Confidence intervals resample questions, which are the independent unit here --
@@ -74,6 +85,26 @@ def majority_choice(preds, subset):
     if not counts:
         return subset[0]
     top = counts.most_common(1)[0][0]
+    for i in subset:
+        if preds[i] == top:
+            return i
+    return subset[0]
+
+
+def weighted_vote_choice(preds, weights, subset):
+    """Index within `subset` of a candidate carrying the heaviest answer.
+
+    Each non-empty answer collects the weights of the candidates that gave it;
+    ties go to the answer seen first. With no parseable answer at all, fall back
+    to the single heaviest candidate.
+    """
+    totals = {}
+    for i in subset:
+        if preds[i] not in ("", None):
+            totals[preds[i]] = totals.get(preds[i], 0.0) + float(weights[i])
+    if not totals:
+        return max(subset, key=lambda i: float(weights[i]))
+    top = max(totals, key=totals.get)
     for i in subset:
         if preds[i] == top:
             return i
@@ -166,39 +197,55 @@ def main():
         head.load_state_dict(torch.load(checkpoint, map_location=device))
         for agg in args.aggs:
             scores = score_cache(head, shard_paths, device, agg)
-            curves[(head_name, agg)] = evaluate(
+            curves[(head_name, agg, "argmax")] = evaluate(
                 lambda subset: max(subset, key=lambda i: float(scores[i]))
             )
+            if preds is not None:
+                weights = torch.sigmoid(scores)
+                curves[(head_name, agg, "weighted_vote")] = evaluate(
+                    lambda subset: weighted_vote_choice(preds, weights, list(subset))
+                )
             print("  scored {0:<14} agg={1}".format(head_name, agg))
 
     # References
-    curves[("random", "-")] = evaluate(lambda subset: subset[0])
-    curves[("oracle", "-")] = evaluate(
+    curves[("random", "-", "reference")] = evaluate(lambda subset: subset[0])
+    curves[("oracle", "-", "reference")] = evaluate(
         lambda subset: max(subset, key=lambda i: int(correct[i]))
     )
+    majority = None
     if preds is not None:
-        curves[("majority_vote", "-")] = evaluate(
-            lambda subset: majority_choice(preds, list(subset))
-        )
+        majority = evaluate(lambda subset: majority_choice(preds, list(subset)))
+        curves[("majority_vote", "-", "reference")] = majority
 
     rows = []
     question_draws = [
         torch.randint(n_questions, (n_questions,), generator=generator)
         for _ in range(args.bootstrap_samples)
     ]
-    for (head_name, agg), curve in curves.items():
+    for (head_name, agg, method), curve in curves.items():
         for k in args.ks:
             per_question = curve[k]
             point = float(per_question.mean())
             samples = [float(per_question[pick].mean()) for pick in question_draws]
             low, high = percentile_ci(samples)
+            diff = diff_low = diff_high = float("nan")
+            if majority is not None:
+                delta = per_question - majority[k]
+                diff = float(delta.mean())
+                diff_low, diff_high = percentile_ci(
+                    [float(delta[pick].mean()) for pick in question_draws]
+                )
             rows.append({
                 "head": head_name,
                 "agg": agg,
+                "method": method,
                 "k": k,
                 "accuracy": point,
                 "ci_low": low,
                 "ci_high": high,
+                "diff_vs_majority": diff,
+                "diff_vs_majority_ci_low": diff_low,
+                "diff_vs_majority_ci_high": diff_high,
                 "n_questions": n_questions,
             })
 

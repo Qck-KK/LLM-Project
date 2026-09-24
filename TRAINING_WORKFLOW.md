@@ -810,6 +810,42 @@ done
 
 注意这两项检查都不是在现行协议下做的：patience 检查用的是作废的 `lr=1e-3`，只能说明旧排名不是 patience 造成的；种子检查用的是 `lr=1e-4` 但只有 10 epochs，6 次中有 5 次在第 10 轮取到最佳，尚未收敛。因此它们支持的是 10 轮预算下的排名，而不是 `results_conv/` 中收敛后的数字。
 
+## 14G. 实验十七：补充消融（现行协议）
+
+以下实验回答前面留下的开放问题，全部复用缓存，由 `run_extra_experiments.py` 顺序执行。训练步骤在 checkpoint 与 efficiency 文件都存在时自动跳过，中断后可直接重跑续上。
+
+| 组 | 问题 | 训练量 |
+|---|---|---|
+| `seeds30` | 在现行协议下（`lr=1e-4`、30 epochs、patience 5）排名是否仍对种子稳健？ | attention / cnn / mlp × 种子 43、44 |
+| `bce` | PQM 排序 loss 是否优于逐步 BCE？这是锚点论文的核心主张 | linear / mlp / attention |
+| `zeta` | 固定的 `zeta=4.0` 是否敏感？ | linear / attention × `zeta` ∈ {2, 8} |
+| `lr3e-5` | 学习率网格补下界：`1e-4` 以下是否还有更优值？ | 六个头 |
+| `eval` | 上述各组的配对 bootstrap + Holm 校正；BoN 加入 PRM 加权投票；同分布 single-solution 对照在最终 cache 上重跑 | 无训练 |
+
+```bash
+python run_extra_experiments.py --dry_run      # 先看将执行的命令
+python run_extra_experiments.py                # 全部执行
+python run_extra_experiments.py --only eval    # 训练完成后只重跑评估
+```
+
+输出：
+
+```text
+checkpoints/{seeds30,bce,zeta}/、checkpoints/lrsweep/*_lr3e-5_head.pt
+results_seeds30/、results_bce/、results_zeta/、results_lrsweep/*_lr3e-5/   # 训练记录
+results_ablations/{seeds30,loss_pqm_vs_bce,zeta,lr_3e-5_vs_1e-4}.json      # 配对比较
+results_ablations/*_pairwise.csv 与 *_pairwise_holm.csv
+results_ablations/bon_bce/bon_results.csv                                  # BCE 头的 BoN
+results_conv/bon_results.csv                                               # 新增 weighted_vote 行与 diff_vs_majority 列
+results_conv/single_indist_metrics.{json,csv}
+```
+
+解读注意：
+
+- 不同 `zeta` 或不同 loss 的 development loss 数值**不可互相比较**（loss 定义不同），比较只看 held-out ROC-AUC / AP 与 BoN。
+- `lr=3e-5` 与网格其他值的比较沿用网格的判据（各自最佳 development loss），同时报告 held-out AUC；若 `3e-5` 在 30 轮内仍在第 30 轮取最佳，说明预算不足，不能据此判定学习率优劣。
+- 重跑 BoN 使用与原来相同的子集和 bootstrap 抽样，因此 `argmax` 行应与原结果逐位一致，可作为回归检查。
+
 ## 15. 使用 Notebook 一次执行完整流程
 
 主入口：

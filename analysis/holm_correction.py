@@ -96,7 +96,9 @@ def main():
                   f"{after}/{len(rows)} after Holm at alpha={args.alpha}")
             for row in corrected:
                 if (row[metric + "_significant"] == "True") != row[metric + "_significant_holm"]:
-                    print(f"    changed: {row['head_a']} vs {row['head_b']} "
+                    a = row.get("head_a", row.get("arm_a"))
+                    b = row.get("head_b", row.get("arm_b"))
+                    print(f"    changed: {a} vs {b} "
                           f"(p={row[metric + '_p_value']:.4f}, "
                           f"p_holm={row[metric + '_p_holm']:.4f})")
 

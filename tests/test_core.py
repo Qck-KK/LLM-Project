@@ -17,7 +17,8 @@ from eval.eval_utils import (
     deterministic_example_split,
     roc_auc,
 )
-from pqm_loss import pqm_loss
+from eval.eval_bon import majority_choice, weighted_vote_choice
+from pqm_loss import bce_step_loss, pqm_loss
 from reward_heads import (
     AttentionPoolingHead,
     AttentionPoolingPositionHead,
@@ -64,6 +65,26 @@ class MultipleComparisonTests(unittest.TestCase):
         self.assertAlmostEqual(bootstrap_p_value(0.0, 2000), 2 / 2001)
         self.assertAlmostEqual(bootstrap_p_value(1.0, 2000), 2 / 2001)
         self.assertEqual(bootstrap_p_value(0.5, 2000), 1.0)
+
+
+class BestOfNTests(unittest.TestCase):
+    def test_uniform_weights_reduce_to_majority_vote(self):
+        preds = ["3", "5", "5", "3", "7"]
+        weights = torch.ones(5)
+        for subset in ([0, 1, 2, 3, 4], [0, 1, 3], [4, 0, 1]):
+            self.assertEqual(weighted_vote_choice(preds, weights, subset),
+                             majority_choice(preds, subset))
+
+    def test_weights_can_overturn_the_majority(self):
+        preds = ["3", "5", "5"]
+        weights = torch.tensor([0.9, 0.3, 0.3])
+        self.assertEqual(weighted_vote_choice(preds, weights, [0, 1, 2]), 0)
+
+    def test_unparseable_answers_do_not_vote(self):
+        preds = ["", "", "4"]
+        weights = torch.tensor([0.9, 0.9, 0.1])
+        self.assertEqual(weighted_vote_choice(preds, weights, [0, 1, 2]), 2)
+        self.assertEqual(weighted_vote_choice(["", ""], weights, [0, 1]), 0)
 
 
 class ArchitectureTests(unittest.TestCase):
@@ -146,6 +167,16 @@ class StabilityTests(unittest.TestCase):
         alone_loss = pqm_loss(rewards[:1], labels[:1])
         self.assertTrue(torch.isfinite(batch_loss))
         self.assertAlmostEqual(float(batch_loss), float(alone_loss), places=6)
+
+    def test_bce_step_loss_ignores_padding_and_matches_torch(self):
+        rewards = torch.tensor([[2.0, -1.0, 99.0]])
+        labels = torch.tensor([[1, 0, -100]])
+        expected = torch.nn.functional.binary_cross_entropy_with_logits(
+            torch.tensor([2.0, -1.0]), torch.tensor([1.0, 0.0])
+        )
+        self.assertAlmostEqual(float(bce_step_loss(rewards, labels)), float(expected), places=6)
+        empty = bce_step_loss(torch.randn(1, 2, requires_grad=True), torch.full((1, 2), -100))
+        self.assertEqual(float(empty.detach()), 0.0)
 
     def test_cnn_valid_outputs_ignore_padded_values(self):
         torch.manual_seed(0)
