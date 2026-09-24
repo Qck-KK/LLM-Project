@@ -21,6 +21,19 @@
 - **多随机种子**：`attention` / `cnn` / `mlp` 各跑 3 个种子。
 - **LoRA**：全量 440k 过一轮，作为"冻结编码器"这一前提的对照。
 
+### 路径约定
+
+本手册所有命令都使用最终结果实际对应的路径：
+
+| 用途 | 路径 |
+|---|---|
+| 训练 / 验证 cache | `cache/train_clean`、`cache/val_clean`（修复标签与 step marker 对齐后重新编码） |
+| 最终 checkpoint | `checkpoints/long30/{head}_head.pt` |
+| 训练记录（loss 曲线、效率） | `results_long30/{head}/` |
+| 最终评估结果 | `results_conv/` |
+
+`checkpoints/` 根目录下的 `{head}_head.pt` 与 `results/` 属于旧协议，仅作记录保留。
+
 训练仍使用固定种子 `42`（多种子实验另用 43、44）。除 embedding 预计算与 LoRA 训练外，其余实验全部复用缓存，不再运行 Qwen。
 
 ## 0. 完整实验顺序
@@ -186,7 +199,7 @@ python benchmark.py \
 ```bash
 python precompute_embeddings.py \
   --train_file data/train.jsonl \
-  --cache_dir cache/train \
+  --cache_dir cache/train_clean \
   --batch_size 16 \
   --max_length 512 \
   --dtype float16
@@ -197,7 +210,7 @@ python precompute_embeddings.py \
 ```bash
 python precompute_embeddings.py \
   --train_file data/val.jsonl \
-  --cache_dir cache/val \
+  --cache_dir cache/val_clean \
   --batch_size 16 \
   --max_length 512 \
   --dtype float16
@@ -217,10 +230,10 @@ python precompute_eval_embeddings.py \
 预期目录结构：
 
 ```text
-cache/train/hidden_size.txt
-cache/train/shard_*.pt
-cache/val/hidden_size.txt
-cache/val/shard_*.pt
+cache/train_clean/hidden_size.txt
+cache/train_clean/shard_*.pt
+cache/val_clean/hidden_size.txt
+cache/val_clean/shard_*.pt
 cache/single_eval/hidden_size.txt       # 可选
 cache/single_eval/shard_*.pt            # 可选
 ```
@@ -240,8 +253,8 @@ cache/single_eval/shard_*.pt            # 可选
 
 ```bash
 python -m analysis.analyze_data_bias \
-  --cache_dir cache/val \
-  --results_dir results \
+  --cache_dir cache/val_clean \
+  --results_dir results_conv \
   --position_bins 5 \
   --calibration_fraction 0.5 \
   --split_seed 42
@@ -264,10 +277,10 @@ python -m analysis.analyze_data_bias \
 输出：
 
 ```text
-results/data_bias.json
-results/data_bias.png
-results/position_label_rates.csv
-results/deterministic_baselines.json
+results_conv/data_bias.json
+results_conv/data_bias.png
+results_conv/position_label_rates.csv
+results_conv/deterministic_baselines.json
 ```
 
 这一实验首先回答：后续模型是否只是利用“越靠后越容易错误”的数据规律。
@@ -298,8 +311,8 @@ results/deterministic_baselines.json
 ```bash
 for head in linear mlp cnn gru attention attention_pe; do
   python train_from_cache.py \
-    --cache_dir cache/train \
-    --val_cache_dir cache/val \
+    --cache_dir cache/train_clean \
+    --val_cache_dir cache/val_clean \
     --head "$head" \
     --epochs 30 \
     --early_stopping_patience 5 \
@@ -308,8 +321,8 @@ for head in linear mlp cnn gru attention attention_pe; do
     --split_seed 42 \
     --lr 1e-4 \
     --zeta 4.0 \
-    --save_path "checkpoints/${head}_head.pt" \
-    --results_dir results
+    --save_path "checkpoints/long30/${head}_head.pt" \
+    --results_dir "results_long30/${head}"
 done
 ```
 
@@ -325,10 +338,10 @@ done
 每个模型输出：
 
 ```text
-checkpoints/{head}_head.pt
-results/{head}_efficiency.json
-results/{head}_loss_history.json
-results/{head}_loss_curve.png
+checkpoints/long30/{head}_head.pt
+results_long30/{head}/{head}_efficiency.json
+results_long30/{head}/{head}_loss_history.json
+results_long30/{head}/{head}_loss_curve.png
 ```
 
 其中：
@@ -347,9 +360,9 @@ results/{head}_loss_curve.png
 训练完成后检查：
 
 ```text
-results/{head}_loss_curve.png
-results/{head}_loss_history.json
-results/{head}_efficiency.json
+results_long30/{head}/{head}_loss_curve.png
+results_long30/{head}/{head}_loss_history.json
+results_long30/{head}/{head}_efficiency.json
 ```
 
 比较：
@@ -368,12 +381,12 @@ results/{head}_efficiency.json
 ```bash
 for head in linear mlp cnn gru attention attention_pe; do
   python -m eval.eval_step_metrics \
-    --cache_dir cache/val \
+    --cache_dir cache/val_clean \
     --head "$head" \
-    --checkpoint "checkpoints/${head}_head.pt" \
+    --checkpoint "checkpoints/long30/${head}_head.pt" \
     --calibration_fraction 0.5 \
     --split_seed 42 \
-    --results_dir results
+    --results_dir results_conv
 done
 ```
 
@@ -402,7 +415,7 @@ done
 输出：
 
 ```text
-results/{head}_step_metrics.json
+results_conv/{head}_step_metrics.json
 ```
 
 ## 9. 实验五：可选 Single-solution 评估
@@ -414,11 +427,11 @@ for head in linear mlp cnn gru attention attention_pe; do
   python -m eval.eval_single_from_cache \
     --cache_dir cache/single_eval \
     --head "$head" \
-    --checkpoint "checkpoints/${head}_head.pt" \
+    --checkpoint "checkpoints/long30/${head}_head.pt" \
     --agg min \
     --calibration_fraction 0.5 \
     --split_seed 42 \
-    --results_dir results
+    --results_dir results_conv
 done
 ```
 
@@ -441,7 +454,7 @@ done
 输出：
 
 ```text
-results/{head}_single_metrics.json
+results_conv/{head}_single_metrics.json
 ```
 
 ## 10. 实验六：随机掷硬币基线
@@ -450,9 +463,9 @@ results/{head}_single_metrics.json
 
 ```bash
 python -m eval.eval_coin_flip_baseline \
-  --val_cache_dir cache/val \
+  --val_cache_dir cache/val_clean \
   --single_cache_dir cache/single_eval \
-  --results_dir results \
+  --results_dir results_conv \
   --trials 100 \
   --seed 42 \
   --calibration_fraction 0.5 \
@@ -470,9 +483,9 @@ python -m eval.eval_coin_flip_baseline \
 输出：
 
 ```text
-results/coin_flip_efficiency.json
-results/coin_flip_step_metrics.json
-results/coin_flip_single_metrics.json       # 有 single cache 时
+results_conv/coin_flip_efficiency.json
+results_conv/coin_flip_step_metrics.json
+results_conv/coin_flip_single_metrics.json       # 有 single cache 时
 ```
 
 ## 11. 实验七：架构分层与首错边界分析
@@ -481,9 +494,9 @@ results/coin_flip_single_metrics.json       # 有 single cache 时
 
 ```bash
 python -m analysis.analyze_head_behavior \
-  --cache_dir cache/val \
-  --checkpoint_dir checkpoints \
-  --results_dir results \
+  --cache_dir cache/val_clean \
+  --checkpoint_dir checkpoints/long30 \
+  --results_dir results_conv \
   --heads linear mlp cnn gru attention attention_pe \
   --calibration_fraction 0.5 \
   --split_seed 42
@@ -539,14 +552,14 @@ offset=-2   offset=-1   offset=0   offset=+1   offset=+2
 输出：
 
 ```text
-results/{head}_step_predictions.pt
-results/{head}_behavior_metrics.json
-results/behavior_summary.csv
-results/behavior_summary.md
-results/behavior_by_group.csv
-results/behavior_by_group.png
-results/first_error_boundary_curves.csv
-results/first_error_boundary.png
+results_conv/{head}_step_predictions.pt
+results_conv/{head}_behavior_metrics.json
+results_conv/behavior_summary.csv
+results_conv/behavior_summary.md
+results_conv/behavior_by_group.csv
+results_conv/behavior_by_group.png
+results_conv/first_error_boundary_curves.csv
+results_conv/first_error_boundary.png
 ```
 
 ## 12. 实验八：可选确定性扰动实验
@@ -555,9 +568,9 @@ results/first_error_boundary.png
 
 ```bash
 python -m analysis.analyze_head_behavior \
-  --cache_dir cache/val \
-  --checkpoint_dir checkpoints \
-  --results_dir results \
+  --cache_dir cache/val_clean \
+  --checkpoint_dir checkpoints/long30 \
+  --results_dir results_conv \
   --heads linear mlp cnn gru attention attention_pe \
   --calibration_fraction 0.5 \
   --split_seed 42 \
@@ -588,8 +601,8 @@ python -m analysis.analyze_head_behavior \
 输出：
 
 ```text
-results/perturbation_results.csv
-results/perturbation_sensitivity.png
+results_conv/perturbation_results.csv
+results_conv/perturbation_sensitivity.png
 ```
 
 ## 13. 实验九：因果前缀与离线启发式剪枝
@@ -606,9 +619,9 @@ results/perturbation_sensitivity.png
 
 ```bash
 python -m analysis.analyze_offline_pruning \
-  --cache_dir cache/val \
-  --checkpoint_dir checkpoints \
-  --results_dir results \
+  --cache_dir cache/val_clean \
+  --checkpoint_dir checkpoints/long30 \
+  --results_dir results_conv \
   --heads linear mlp cnn gru attention attention_pe \
   --budgets 0.01 0.05 0.10 \
   --primary_budget 0.05 \
@@ -639,16 +652,16 @@ python -m analysis.analyze_offline_pruning \
 1000 次轨迹级 bootstrap 只估计评估不确定性，不会重新训练模型。输出：
 
 ```text
-results/{head}_causal_predictions.pt
-results/{head}_pruning_metrics.json
-results/causal_diagnostics.csv
-results/pruning_thresholds.json
-results/pruning_results.csv
-results/pruning_by_group.csv
-results/pruning_summary.md
-results/full_vs_causal_scores.png
-results/pruning_tradeoff.png
-results/pruning_detection_delay.png
+results_conv/{head}_causal_predictions.pt
+results_conv/{head}_pruning_metrics.json
+results_conv/causal_diagnostics.csv
+results_conv/pruning_thresholds.json
+results_conv/pruning_results.csv
+results_conv/pruning_by_group.csv
+results_conv/pruning_summary.md
+results_conv/full_vs_causal_scores.png
+results_conv/pruning_tradeoff.png
+results_conv/pruning_detection_delay.png
 ```
 
 `theoretical_step_saving_rate` 与 `safe_step_saving_rate` 都是基于缓存轨迹长度的 step-equivalent 指标，不能写成真实 wall-clock 或 FLOPs 加速。
@@ -659,9 +672,9 @@ results/pruning_detection_delay.png
 
 ```bash
 python -m eval.summarize_results \
-  --results_dir results \
-  --out_csv results/summary.csv \
-  --out_md results/summary.md
+  --results_dir results_conv \
+  --out_csv results_conv/summary.csv \
+  --out_md results_conv/summary.md
 ```
 
 最终表格包含：
@@ -683,8 +696,8 @@ python -m eval.summarize_results \
 输出：
 
 ```text
-results/summary.csv
-results/summary.md
+results_conv/summary.csv
+results_conv/summary.md
 ```
 
 ## 14A. 实验十一：学习率网格（最重要的一步）
@@ -694,7 +707,7 @@ results/summary.md
 ```bash
 for lr in 1e-3 3e-4 1e-4; do
   for head in linear mlp cnn gru attention attention_pe; do
-    python train_from_cache.py       --cache_dir cache/train --val_cache_dir cache/val       --head "$head" --epochs 30 --early_stopping_patience 5 --seed 42       --calibration_fraction 0.5 --split_seed 42 --lr "$lr" --zeta 4.0       --save_path "checkpoints/lrsweep/${head}_lr${lr}_head.pt"       --results_dir "results_lrsweep/${head}_lr${lr}"
+    python train_from_cache.py       --cache_dir cache/train_clean --val_cache_dir cache/val_clean       --head "$head" --epochs 30 --early_stopping_patience 5 --seed 42       --calibration_fraction 0.5 --split_seed 42 --lr "$lr" --zeta 4.0       --save_path "checkpoints/lrsweep/${head}_lr${lr}_head.pt"       --results_dir "results_lrsweep/${head}_lr${lr}"
   done
 done
 ```
@@ -710,9 +723,9 @@ done
 架构排名依赖 0.005 量级的差值，没有区间就无法判断是否为噪声。
 
 ```bash
-python -m analysis.bootstrap_step_metrics   --cache_dir cache/val --checkpoint_dir checkpoints   --results_dir results --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --calibration_fraction 0.5 --split_seed 42 --seed 42
+python -m analysis.bootstrap_step_metrics   --cache_dir cache/val_clean --checkpoint_dir checkpoints/long30   --results_dir results_conv --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --calibration_fraction 0.5 --split_seed 42 --seed 42
 
-python -m analysis.bootstrap_causal_metrics   --results_dir results --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --seed 42
+python -m analysis.bootstrap_causal_metrics   --results_dir results_conv --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --seed 42
 ```
 
 重采样单位是**轨迹**而非步骤（同一条解答内的步骤高度相关），且所有头在**同一次重采样**上打分，
@@ -723,7 +736,7 @@ python -m analysis.bootstrap_causal_metrics   --results_dir results --heads line
 六个头两两比较是每个指标 15 次检验，逐个看区间是否跨 0 会放大假阳性。用 Holm 校正控制族错误率（只读上面两个 pairwise CSV，不需要模型或缓存）：
 
 ```bash
-python -m analysis.holm_correction   results/step_metrics_ci_pairwise.csv results/causal_metrics_ci_pairwise.csv   --bootstrap_samples 2000
+python -m analysis.holm_correction   results_conv/step_metrics_ci_pairwise.csv results_conv/causal_metrics_ci_pairwise.csv   --bootstrap_samples 2000
 ```
 
 输出同名的 `*_pairwise_holm.csv`，原文件不变。
@@ -735,7 +748,7 @@ python -m analysis.holm_correction   results/step_metrics_ci_pairwise.csv result
 这是锚点论文 PQM 的主指标，也是 PRM 最贴近实际的用途。
 
 ```bash
-python -m eval.eval_bon   --cache_dir cache/single_eval --eval_file data/single_eval.jsonl   --source_file data/gsm8k_qwen0.5b_bon16.jsonl   --checkpoint_dir checkpoints --heads linear mlp cnn gru attention attention_pe   --aggs min mean last --ks 1 2 4 8 16 --subsets_per_question 20   --bootstrap_samples 2000 --results_dir results --seed 42
+python -m eval.eval_bon   --cache_dir cache/single_eval --eval_file data/single_eval.jsonl   --source_file data/gsm8k_qwen0.5b_bon16.jsonl   --checkpoint_dir checkpoints/long30 --heads linear mlp cnn gru attention attention_pe   --aggs min mean last --ks 1 2 4 8 16 --subsets_per_question 20   --bootstrap_samples 2000 --results_dir results_conv --seed 42
 ```
 
 两条参照线缺一不可：
@@ -751,7 +764,7 @@ python -m eval.eval_bon   --cache_dir cache/single_eval --eval_file data/single_
 若 BoN / OOD single-solution 表现差，需要区分"模型做不了轨迹级判断"与"迁移不过去"。
 
 ```bash
-python -m eval.eval_single_from_step_cache   --cache_dir cache/val --checkpoint_dir checkpoints   --heads linear mlp cnn gru attention attention_pe --aggs min mean last   --results_dir results --bootstrap_samples 2000   --calibration_fraction 0.5 --split_seed 42 --seed 42
+python -m eval.eval_single_from_step_cache   --cache_dir cache/val_clean --checkpoint_dir checkpoints/long30   --heads linear mlp cnn gru attention attention_pe --aggs min mean last   --results_dir results_conv --bootstrap_samples 2000   --calibration_fraction 0.5 --split_seed 42 --seed 42
 ```
 
 它复用验证集缓存，把"全部步骤正确"作为轨迹标签，因此与 OOD 版本只差分布。
@@ -767,7 +780,7 @@ python train_lora.py   --train_file data/train.jsonl --epochs 1 --batch_size 4 -
 # LoRA 改变了编码器，评估缓存必须重新生成
 python precompute_embeddings.py --train_file data/val.jsonl   --cache_dir cache/val_lora --lora_path checkpoints/lora_full/adapter   --batch_size 16 --max_length 512 --dtype float16
 
-python -m analysis.compare_lora_frozen   --arm "lora_linear:cache/val_lora:linear:checkpoints/lora_eval/linear_head.pt"   --arm "frozen_linear:cache/val:linear:checkpoints/linear_head.pt"   --arm "frozen_attention:cache/val:attention:checkpoints/attention_head.pt"   --results_dir results --bootstrap_samples 2000
+python -m analysis.compare_lora_frozen   --arm "lora_linear:cache/val_lora:linear:checkpoints/lora_eval/linear_head.pt"   --arm "frozen_linear:cache/val_clean:linear:checkpoints/long30/linear_head.pt"   --arm "frozen_attention:cache/val_clean:attention:checkpoints/long30/attention_head.pt"   --results_dir results_loraeval --bootstrap_samples 2000
 ```
 
 在 8GB 显存上可用的操作点只有 `batch_size=4, max_length=512`；`batch_size=8` 会溢出并慢 6.8 倍。
@@ -781,13 +794,13 @@ python -m analysis.compare_lora_frozen   --arm "lora_linear:cache/val_lora:linea
 ```bash
 # patience 是否扭曲了排名
 for head in linear mlp cnn gru attention; do
-  python train_from_cache.py --cache_dir cache/train --val_cache_dir cache/val     --head "$head" --epochs 10 --early_stopping_patience 4 --seed 42     --calibration_fraction 0.5 --split_seed 42 --lr 1e-3 --zeta 4.0     --save_path "checkpoints/patience4/${head}_head.pt"     --results_dir "results_patience4"
+  python train_from_cache.py --cache_dir cache/train_clean --val_cache_dir cache/val_clean     --head "$head" --epochs 10 --early_stopping_patience 4 --seed 42     --calibration_fraction 0.5 --split_seed 42 --lr 1e-3 --zeta 4.0     --save_path "checkpoints/patience4/${head}_head.pt"     --results_dir "results_patience4"
 done
 
 # 种子方差是否大于架构差异
 for seed in 43 44; do
   for head in attention cnn mlp; do
-    python train_from_cache.py --cache_dir cache/train --val_cache_dir cache/val       --head "$head" --epochs 10 --early_stopping_patience 2 --seed "$seed"       --calibration_fraction 0.5 --split_seed 42 --lr 1e-4 --zeta 4.0       --save_path "checkpoints/seeds/${head}_s${seed}_head.pt"       --results_dir "results_seeds/${head}_s${seed}"
+    python train_from_cache.py --cache_dir cache/train_clean --val_cache_dir cache/val_clean       --head "$head" --epochs 10 --early_stopping_patience 2 --seed "$seed"       --calibration_fraction 0.5 --split_seed 42 --lr 1e-4 --zeta 4.0       --save_path "checkpoints/seeds/${head}_s${seed}_head.pt"       --results_dir "results_seeds/${head}_s${seed}"
   done
 done
 ```
@@ -831,7 +844,7 @@ RUN_PERTURBATIONS = True
 HEADS = ["linear", "mlp", "cnn", "gru", "attention", "attention_pe"]
 ```
 
-Notebook 默认不会重新生成 embedding cache，结果写入 `results_rerun/`，不会覆盖 `results/`（旧协议记录）或 `results_conv/`（最终结果）。
+Notebook 默认不会重新生成 embedding cache。它读取 `cache/train_clean` 与 `cache/val_clean`，checkpoint 写入 `checkpoints/rerun/`、结果写入 `results_rerun/`，不会覆盖最终结果（`checkpoints/long30/`、`results_conv/`）或旧协议记录（`checkpoints/`、`results/`）。
 
 ## 16. 最终报告的推荐顺序
 
@@ -907,29 +920,29 @@ python -m py_compile *.py analysis/*.py eval/*.py tests/*.py
 
 ```text
 checkpoints/*.pt
-results/*_loss_history.json
-results/*_loss_curve.png
-results/*_efficiency.json
-results/*_step_metrics.json
-results/*_behavior_metrics.json
-results/data_bias.json
-results/deterministic_baselines.json
-results/behavior_by_group.csv
-results/first_error_boundary_curves.csv
-results/perturbation_results.csv             # 执行扰动时
-results/*_causal_predictions.pt
-results/*_pruning_metrics.json
-results/pruning_results.csv
-results/pruning_by_group.csv
-results/pruning_summary.md
-results/summary.csv
-results/summary.md
-results/step_metrics_ci.json                 # 主指标置信区间
-results/step_metrics_ci_pairwise.csv         # 配对差值与显著性
-results/causal_metrics_ci.json               # 因果前缀置信区间
-results/bon_results.csv                      # Best-of-N vs majority / oracle
-results/single_indist_metrics.csv            # 同分布 single-solution 对照
-results/lora_vs_frozen.json                  # LoRA 对照
+results_conv/*_loss_history.json
+results_conv/*_loss_curve.png
+results_conv/*_efficiency.json
+results_conv/*_step_metrics.json
+results_conv/*_behavior_metrics.json
+results_conv/data_bias.json
+results_conv/deterministic_baselines.json
+results_conv/behavior_by_group.csv
+results_conv/first_error_boundary_curves.csv
+results_conv/perturbation_results.csv             # 执行扰动时
+results_conv/*_causal_predictions.pt
+results_conv/*_pruning_metrics.json
+results_conv/pruning_results.csv
+results_conv/pruning_by_group.csv
+results_conv/pruning_summary.md
+results_conv/summary.csv
+results_conv/summary.md
+results_conv/step_metrics_ci.json                 # 主指标置信区间
+results_conv/step_metrics_ci_pairwise.csv         # 配对差值与显著性
+results_conv/causal_metrics_ci.json               # 因果前缀置信区间
+results_conv/bon_results.csv                      # Best-of-N vs majority / oracle
+results_conv/single_indist_metrics.csv            # 同分布 single-solution 对照
+results_conv/lora_vs_frozen.json                  # LoRA 对照
 ```
 
 ### 17.5 结论审计
