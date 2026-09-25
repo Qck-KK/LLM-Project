@@ -19,6 +19,9 @@ Groups, in the order they run (Qwen never runs; the caches must exist):
 * zeta       -- PQM margin 2 and 8 against the default 4 (linear / attention).
 * seeds      -- seeds 43 and 44 for attention / cnn / mlp.
 * lr         -- 3e-5 and 3e-4 for all six heads, around the chosen 1e-4.
+* long       -- mlp and attention_pe again with a 60-epoch cap: on the corrected
+                data both picked epoch 30, the cap, so they had not converged.
+* long_eval  -- paired comparison of the 60-epoch runs against the 30-epoch ones.
 * ablation_eval -- paired bootstrap comparisons of every ablation against the
                 final heads, Holm correction, Best-of-N for the BCE heads.
 
@@ -50,15 +53,18 @@ BCE_HEADS = ["linear", "mlp", "attention"]
 ZETA_HEADS = ["linear", "attention"]
 ZETAS = ["2", "8"]
 OTHER_LRS = ["3e-5", "3e-4"]
+LONG_HEADS = ["mlp", "attention_pe"]
+LONG_EPOCHS = "60"
 
 SPLIT = ["--calibration_fraction", "0.5", "--split_seed", "42"]
 COMMON = ["--cache_dir", TRAIN_CACHE, "--val_cache_dir", VAL_CACHE,
-          "--epochs", "30", "--early_stopping_patience", "5", *SPLIT]
+          "--early_stopping_patience", "5", *SPLIT]
 PY = sys.executable
 
 
-def train_step(head, save_path, results_dir, lr="1e-4", zeta="4.0", seed="42", loss="pqm"):
-    cmd = [PY, "train_from_cache.py", *COMMON, "--head", head,
+def train_step(head, save_path, results_dir, lr="1e-4", zeta="4.0", seed="42", loss="pqm",
+               epochs="30"):
+    cmd = [PY, "train_from_cache.py", *COMMON, "--epochs", epochs, "--head", head,
            "--lr", lr, "--zeta", zeta, "--seed", str(seed), "--loss", loss,
            "--save_path", save_path, "--results_dir", results_dir]
     done = [save_path, os.path.join(results_dir, head + "_efficiency.json")]
@@ -101,6 +107,11 @@ def training_steps(groups):
                 tag = "{0}_lr{1}".format(head, lr)
                 steps.append(train_step(head, ablation("lr", tag),
                                         os.path.join(train_log, tag), lr=lr))
+    if "long" in groups:
+        for head in LONG_HEADS:
+            tag = "{0}_e{1}".format(head, LONG_EPOCHS)
+            steps.append(train_step(head, ablation("long", tag),
+                                    os.path.join(train_log, tag), epochs=LONG_EPOCHS))
     return steps
 
 
@@ -207,7 +218,19 @@ def ablation_eval_steps():
     return steps
 
 
-GROUPS = ["main", "main_eval", "bce", "zeta", "seeds", "lr", "ablation_eval"]
+def long_eval_steps():
+    arms = []
+    for head in LONG_HEADS:
+        tag = "{0}_e{1}".format(head, LONG_EPOCHS)
+        arms += arm(head + "_e30", head, final(head))
+        arms += arm(tag, head, ablation("long", tag))
+    return [compare("long", arms),
+            [PY, "-m", "analysis.holm_correction", os.path.join(ABL_OUT, "long_pairwise.csv"),
+             "--bootstrap_samples", "2000"]]
+
+
+GROUPS = ["main", "main_eval", "bce", "zeta", "seeds", "lr", "ablation_eval",
+          "long", "long_eval"]
 
 
 def main():
@@ -222,6 +245,9 @@ def main():
     steps += training_steps([g for g in ("bce", "zeta", "seeds", "lr") if g in args.only])
     if "ablation_eval" in args.only:
         steps += [(cmd, []) for cmd in ablation_eval_steps()]
+    steps += training_steps([g for g in ("long",) if g in args.only])
+    if "long_eval" in args.only:
+        steps += [(cmd, []) for cmd in long_eval_steps()]
 
     for index, (cmd, done) in enumerate(steps, 1):
         label = "[{0}/{1}]".format(index, len(steps))
