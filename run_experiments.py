@@ -230,7 +230,8 @@ def main():
             continue
         print(label + " $ " + " ".join(cmd), flush=True)
         if not args.dry_run:
-            subprocess.run(cmd, check=True)
+            # Unbuffered children, so their progress reaches a redirected log.
+            subprocess.run(cmd, check=True, env={**os.environ, "PYTHONUNBUFFERED": "1"})
 
 
 if __name__ == "__main__":
