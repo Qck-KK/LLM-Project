@@ -1,0 +1,16 @@
+{
+  "head": "linear",
+  "checkpoint": "checkpoints/final/linear_head.pt",
+  "step_reward_accuracy": 0.7027090787887573,
+  "step_reward_calibration_accuracy": 0.7065209150314331,
+  "step_reward_threshold": -4.136657238006592,
+  "step_balanced_accuracy": 0.7013993859291077,
+  "step_roc_auc": 0.7672211527824402,
+  "step_average_precision": 0.7603392004966736,
+  "qvalue_ranking_accuracy": 0.9132143441951859,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2222,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 897
+}

@@ -1,0 +1,16 @@
+{
+  "head": "cnn",
+  "checkpoint": "checkpoints/final/cnn_head.pt",
+  "step_reward_accuracy": 0.7712603211402893,
+  "step_reward_calibration_accuracy": 0.7665755748748779,
+  "step_reward_threshold": -4.703604698181152,
+  "step_balanced_accuracy": 0.7702813148498535,
+  "step_roc_auc": 0.8485900163650513,
+  "step_average_precision": 0.850174069404602,
+  "qvalue_ranking_accuracy": 0.9256590797445554,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2222,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 393601
+}

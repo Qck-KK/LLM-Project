@@ -1,0 +1,15 @@
+{
+  "head": "linear",
+  "checkpoint": "checkpoints/final/linear_head.pt",
+  "agg": "min",
+  "single_eval_accuracy": 0.7105761766433716,
+  "single_eval_calibration_accuracy": 0.7122820615768433,
+  "single_eval_threshold": -2.8313162326812744,
+  "single_eval_balanced_accuracy": 0.5839020013809204,
+  "single_eval_roc_auc": 0.7209197282791138,
+  "single_eval_average_precision": 0.4903107285499573,
+  "single_eval_separation": 0.7209195494651794,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

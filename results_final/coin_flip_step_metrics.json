@@ -1,0 +1,14 @@
+{
+  "head": "coin_flip",
+  "baseline": "fair_coin",
+  "trials": 100,
+  "seed": 42,
+  "split_seed": 42,
+  "calibration_fraction": 0.5,
+  "step_reward_accuracy": 0.5000659823417664,
+  "step_reward_accuracy_std": 0.004338099155575037,
+  "step_reward_threshold": null,
+  "qvalue_ranking_accuracy": 0.4988832473754883,
+  "qvalue_ranking_accuracy_std": 0.012064836919307709,
+  "n_trainable_params": 0
+}

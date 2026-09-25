@@ -1,0 +1,15 @@
+{
+  "head": "coin_flip",
+  "baseline": "fair_coin",
+  "trials": 100,
+  "seed": 42,
+  "split_seed": 42,
+  "calibration_fraction": 0.5,
+  "agg": "coin_flip",
+  "single_eval_accuracy": 0.49995172023773193,
+  "single_eval_accuracy_std": 0.004577017854899168,
+  "single_eval_threshold": null,
+  "single_eval_separation": 0.49962329864501953,
+  "single_eval_separation_std": 0.006108101923018694,
+  "n_solutions": 10552
+}

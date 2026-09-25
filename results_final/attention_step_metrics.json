@@ -1,0 +1,16 @@
+{
+  "head": "attention",
+  "checkpoint": "checkpoints/final/attention_head.pt",
+  "step_reward_accuracy": 0.7875932455062866,
+  "step_reward_calibration_accuracy": 0.7985942959785461,
+  "step_reward_threshold": -4.1375555992126465,
+  "step_balanced_accuracy": 0.7862572073936462,
+  "step_roc_auc": 0.8692118525505066,
+  "step_average_precision": 0.8742918968200684,
+  "qvalue_ranking_accuracy": 0.9335189127231046,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2222,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 6433281
+}
