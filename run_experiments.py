@@ -22,6 +22,12 @@ Groups, in the order they run (Qwen never runs; the caches must exist):
 * long       -- mlp and attention_pe again with a 60-epoch cap: on the corrected
                 data both picked epoch 30, the cap, so they had not converged.
 * long_eval  -- paired comparison of the 60-epoch runs against the 30-epoch ones.
+* lora       -- the frozen-encoder control: LoRA (r=16 on q/k/v/o) plus a linear
+                value head, one pass over the corrected training set, then the
+                validation and GSM8K caches re-encoded with the adapted encoder.
+                Needs transformers and peft (--encoder_python). About 10 hours.
+* lora_eval  -- LoRA vs the frozen linear and attention heads (paired), and
+                Best-of-N for the LoRA head.
 * ablation_eval -- paired bootstrap comparisons of every ablation against the
                 final heads, Holm correction, Best-of-N for the BCE heads.
 
@@ -60,6 +66,10 @@ SPLIT = ["--calibration_fraction", "0.5", "--split_seed", "42"]
 COMMON = ["--cache_dir", TRAIN_CACHE, "--val_cache_dir", VAL_CACHE,
           "--early_stopping_patience", "5", *SPLIT]
 PY = sys.executable
+ENCODER_PY = sys.executable  # overridden by --encoder_python for Qwen-running steps
+LORA_CKPT = "checkpoints/ablations/lora"
+VAL_LORA_CACHE = "cache/val_lora_fixed"
+BON_LORA_CACHE = "cache/single_eval_lora_fixed"
 
 
 def train_step(head, save_path, results_dir, lr="1e-4", zeta="4.0", seed="42", loss="pqm",
@@ -229,15 +239,53 @@ def long_eval_steps():
              "--bootstrap_samples", "2000"]]
 
 
+def lora_steps():
+    train = [ENCODER_PY, "train_lora.py", "--train_file", "data/train.jsonl",
+             "--epochs", "1", "--batch_size", "4", "--max_length", "512",
+             "--lr", "1e-4", "--zeta", "4.0", "--seed", "42",
+             "--save_dir", LORA_CKPT, "--results_dir", os.path.join(ABL_OUT, "lora")]
+    adapter = os.path.join(LORA_CKPT, "adapter")
+    return [
+        (train, [os.path.join(LORA_CKPT, "linear_head.pt"),
+                 os.path.join(ABL_OUT, "lora", "lora_training.json")]),
+        ([ENCODER_PY, "precompute_embeddings.py", "--train_file", "data/val.jsonl",
+          "--cache_dir", VAL_LORA_CACHE, "--lora_path", adapter,
+          "--batch_size", "16", "--max_length", "512", "--dtype", "float16"], []),
+        ([ENCODER_PY, "precompute_eval_embeddings.py", "--eval_file", "data/single_eval.jsonl",
+          "--cache_dir", BON_LORA_CACHE, "--lora_path", adapter,
+          "--batch_size", "16", "--max_length", "512", "--dtype", "float16"], []),
+    ]
+
+
+def lora_eval_steps():
+    arms = (["--arm", "lora_linear:{0}:linear:{1}".format(
+                VAL_LORA_CACHE, os.path.join(LORA_CKPT, "linear_head.pt"))]
+            + arm("frozen_linear", "linear", final("linear"))
+            + arm("frozen_attention", "attention", final("attention")))
+    bon_lora = bon(LORA_CKPT, ["linear"], os.path.join(ABL_OUT, "bon_lora"))
+    bon_lora[bon_lora.index("--cache_dir") + 1] = BON_LORA_CACHE
+    return [compare("lora_vs_frozen", arms),
+            [PY, "-m", "analysis.holm_correction",
+             os.path.join(ABL_OUT, "lora_vs_frozen_pairwise.csv"), "--bootstrap_samples", "2000"],
+            bon_lora]
+
+
 GROUPS = ["main", "main_eval", "bce", "zeta", "seeds", "lr", "ablation_eval",
-          "long", "long_eval"]
+          "long", "long_eval", "lora", "lora_eval"]
 
 
 def main():
+    global OTHER_LRS, ENCODER_PY
     parser = argparse.ArgumentParser()
     parser.add_argument("--only", nargs="+", choices=GROUPS, default=GROUPS)
+    parser.add_argument("--lrs", nargs="+", default=OTHER_LRS,
+                        help="Subset of the lr group, e.g. to split it across parallel workers.")
+    parser.add_argument("--encoder_python", default=sys.executable,
+                        help="Interpreter with transformers and peft, for the lora group.")
     parser.add_argument("--dry_run", action="store_true")
     args = parser.parse_args()
+    OTHER_LRS = args.lrs
+    ENCODER_PY = args.encoder_python
 
     steps = training_steps([g for g in ("main",) if g in args.only])
     if "main_eval" in args.only:
@@ -248,6 +296,10 @@ def main():
     steps += training_steps([g for g in ("long",) if g in args.only])
     if "long_eval" in args.only:
         steps += [(cmd, []) for cmd in long_eval_steps()]
+    if "lora" in args.only:
+        steps += lora_steps()
+    if "lora_eval" in args.only:
+        steps += [(cmd, []) for cmd in lora_eval_steps()]
 
     for index, (cmd, done) in enumerate(steps, 1):
         label = "[{0}/{1}]".format(index, len(steps))

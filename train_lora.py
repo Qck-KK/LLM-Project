@@ -7,9 +7,15 @@ shows what freezing costs. This script supplies the missing arm: the same PQM
 loss and the same linear value head, but with LoRA adapters on the encoder's
 attention projections.
 
-To keep the comparison honest on a single 8GB GPU, both arms train on the SAME
-10% subset of Math-Shepherd. The result is a scaled-down but controlled answer
-to "does unfreezing the encoder help?", not a compute-matched replication of PQM.
+The LoRA arm makes one pass over the full training set, while the frozen arms
+train for up to 30 epochs on cached features. That handicap favours the frozen
+arms, so "LoRA shows no gain" is a conservative reading and a LoRA loss is
+ambiguous. It is a controlled answer to "does unfreezing the encoder help?", not
+a compute-matched replication of PQM.
+
+Besides the adapter and `value_head.pt`, the value head is also written as
+`linear_head.pt` in the `LinearHead` format, so the evaluation scripts can
+score LoRA-adapted caches with it directly.
 
 The measured operating point on an RTX 4060 is batch 4 at max_length 512: batch
 8 already spills out of 8GB and runs ~7x slower.
@@ -184,6 +190,9 @@ def main():
 
         model.save_pretrained(os.path.join(args.save_dir, "adapter"))
         torch.save(head.state_dict(), os.path.join(args.save_dir, "value_head.pt"))
+        # The same weights under reward_heads.LinearHead's parameter names.
+        torch.save({"proj." + k: v for k, v in head.state_dict().items()},
+                   os.path.join(args.save_dir, "linear_head.pt"))
 
     elapsed = time.time() - start
     summary = {
