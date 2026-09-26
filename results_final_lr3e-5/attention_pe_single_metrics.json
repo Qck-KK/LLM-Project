@@ -1,0 +1,15 @@
+{
+  "head": "attention_pe",
+  "checkpoint": "checkpoints/ablations\\lr\\attention_pe_lr3e-5_head.pt",
+  "agg": "min",
+  "single_eval_accuracy": 0.7028999328613281,
+  "single_eval_calibration_accuracy": 0.7011941075325012,
+  "single_eval_threshold": 1.1567919254302979,
+  "single_eval_balanced_accuracy": 0.5570873618125916,
+  "single_eval_roc_auc": 0.6815835237503052,
+  "single_eval_average_precision": 0.4574851095676422,
+  "single_eval_separation": 0.6815834641456604,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

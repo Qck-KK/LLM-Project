@@ -1,0 +1,15 @@
+{
+  "head": "gru",
+  "checkpoint": "checkpoints/ablations\\lr\\gru_lr3e-5_head.pt",
+  "agg": "min",
+  "single_eval_accuracy": 0.7048900723457336,
+  "single_eval_calibration_accuracy": 0.7028999328613281,
+  "single_eval_threshold": 0.5841755867004395,
+  "single_eval_balanced_accuracy": 0.5611674785614014,
+  "single_eval_roc_auc": 0.684407114982605,
+  "single_eval_average_precision": 0.464262992143631,
+  "single_eval_separation": 0.684407114982605,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

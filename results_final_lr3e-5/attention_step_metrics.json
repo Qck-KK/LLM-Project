@@ -1,0 +1,16 @@
+{
+  "head": "attention",
+  "checkpoint": "checkpoints/ablations\\lr\\attention_lr3e-5_head.pt",
+  "step_reward_accuracy": 0.8023557066917419,
+  "step_reward_calibration_accuracy": 0.8073408603668213,
+  "step_reward_threshold": -3.842759132385254,
+  "step_balanced_accuracy": 0.8017220497131348,
+  "step_roc_auc": 0.8755985498428345,
+  "step_average_precision": 0.8774047493934631,
+  "qvalue_ranking_accuracy": 0.9006058621254298,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2222,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 6433281
+}

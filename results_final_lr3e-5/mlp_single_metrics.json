@@ -1,0 +1,15 @@
+{
+  "head": "mlp",
+  "checkpoint": "checkpoints/ablations\\lr\\mlp_lr3e-5_head.pt",
+  "agg": "min",
+  "single_eval_accuracy": 0.7012888789176941,
+  "single_eval_calibration_accuracy": 0.6953184008598328,
+  "single_eval_threshold": -0.12624096870422363,
+  "single_eval_balanced_accuracy": 0.5217148661613464,
+  "single_eval_roc_auc": 0.6453295946121216,
+  "single_eval_average_precision": 0.4259757995605469,
+  "single_eval_separation": 0.6453292965888977,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_solutions": 10552
+}

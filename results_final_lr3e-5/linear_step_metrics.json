@@ -1,0 +1,16 @@
+{
+  "head": "linear",
+  "checkpoint": "checkpoints/ablations\\lr\\linear_lr3e-5_head.pt",
+  "step_reward_accuracy": 0.7021594047546387,
+  "step_reward_calibration_accuracy": 0.7061304450035095,
+  "step_reward_threshold": -4.132842540740967,
+  "step_balanced_accuracy": 0.7009199857711792,
+  "step_roc_auc": 0.7662816643714905,
+  "step_average_precision": 0.7594026327133179,
+  "qvalue_ranking_accuracy": 0.9166530211233012,
+  "calibration_fraction": 0.5,
+  "split_seed": 42,
+  "n_calibration_trajectories": 2222,
+  "n_test_trajectories": 2223,
+  "n_trainable_params": 897
+}
