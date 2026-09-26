@@ -22,6 +22,10 @@ Groups, in the order they run (Qwen never runs; the caches must exist):
 * long       -- mlp and attention_pe again with a 60-epoch cap: on the corrected
                 data both picked epoch 30, the cap, so they had not converged.
 * long_eval  -- paired comparison of the 60-epoch runs against the 30-epoch ones.
+* main_eval_lr3e-5 -- the same evaluation chain for the six heads trained at
+                lr=3e-5 (from the lr group). On the corrected data 3e-5 reaches a
+                lower development loss than the protocol's 1e-4 for five heads,
+                so the conclusions are re-checked there -> results_final_lr3e-5/
 * lora       -- the frozen-encoder control: LoRA (r=16 on q/k/v/o) plus a linear
                 value head, one pass over the corrected training set, then the
                 validation and GSM8K caches re-encoded with the adapted encoder.
@@ -41,6 +45,7 @@ exist, so an interrupted run resumes where it stopped. Evaluation always reruns.
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 
@@ -135,31 +140,36 @@ def bon(checkpoint_dir, heads, results_dir):
             "--results_dir", results_dir, "--seed", "42"]
 
 
-def main_eval_steps():
-    out, ckpt = FINAL_OUT, FINAL_CKPT
+def main_eval_steps(out=None, ckpt=None, pattern="{head}_head.pt"):
+    """The full evaluation chain for six heads stored as ckpt/pattern."""
+    out, ckpt = out or FINAL_OUT, ckpt or FINAL_CKPT
+    pat = ["--checkpoint_pattern", pattern]
+
+    def checkpoint(head):
+        return os.path.join(ckpt, pattern.format(head=head))
     steps = [[PY, "-m", "analysis.analyze_data_bias", "--cache_dir", VAL_CACHE,
               "--results_dir", out, "--position_bins", "5", *SPLIT]]
     for head in ALL_HEADS:
         steps.append([PY, "-m", "eval.eval_step_metrics", "--cache_dir", VAL_CACHE,
-                      "--head", head, "--checkpoint", final(head), *SPLIT,
+                      "--head", head, "--checkpoint", checkpoint(head), *SPLIT,
                       "--results_dir", out])
     for head in ALL_HEADS:
         steps.append([PY, "-m", "eval.eval_single_from_cache", "--cache_dir", BON_CACHE,
-                      "--head", head, "--checkpoint", final(head), "--agg", "min", *SPLIT,
+                      "--head", head, "--checkpoint", checkpoint(head), "--agg", "min", *SPLIT,
                       "--results_dir", out])
     steps.append([PY, "-m", "eval.eval_coin_flip_baseline", "--val_cache_dir", VAL_CACHE,
                   "--single_cache_dir", BON_CACHE, "--results_dir", out,
                   "--trials", "100", "--seed", "42", *SPLIT])
     steps.append([PY, "-m", "analysis.analyze_head_behavior", "--cache_dir", VAL_CACHE,
-                  "--checkpoint_dir", ckpt, "--results_dir", out, "--heads", *ALL_HEADS,
+                  "--checkpoint_dir", ckpt, *pat, "--results_dir", out, "--heads", *ALL_HEADS,
                   *SPLIT, "--run_perturbations"])
     steps.append([PY, "-m", "analysis.analyze_offline_pruning", "--cache_dir", VAL_CACHE,
-                  "--checkpoint_dir", ckpt, "--results_dir", out, "--heads", *ALL_HEADS,
+                  "--checkpoint_dir", ckpt, *pat, "--results_dir", out, "--heads", *ALL_HEADS,
                   "--budgets", "0.01", "0.05", "0.10", "--primary_budget", "0.05",
                   "--primary_policy", "single_low", "--bootstrap_samples", "1000",
                   *SPLIT, "--seed", "42"])
     steps.append([PY, "-m", "analysis.bootstrap_step_metrics", "--cache_dir", VAL_CACHE,
-                  "--checkpoint_dir", ckpt, "--results_dir", out, "--heads", *ALL_HEADS,
+                  "--checkpoint_dir", ckpt, *pat, "--results_dir", out, "--heads", *ALL_HEADS,
                   "--bootstrap_samples", "2000", *SPLIT, "--seed", "42"])
     steps.append([PY, "-m", "analysis.bootstrap_causal_metrics", "--results_dir", out,
                   "--heads", *ALL_HEADS, "--bootstrap_samples", "2000", "--seed", "42"])
@@ -167,10 +177,10 @@ def main_eval_steps():
                   os.path.join(out, "step_metrics_ci_pairwise.csv"),
                   os.path.join(out, "causal_metrics_ci_pairwise.csv"),
                   "--bootstrap_samples", "2000"])
-    steps.append(bon(ckpt, ALL_HEADS, out))
+    steps.append(bon(ckpt, ALL_HEADS, out) + pat)
     steps.append([PY, "-m", "eval.eval_single_from_step_cache", "--cache_dir", VAL_CACHE,
                   "--source_file", "data/val.jsonl",
-                  "--checkpoint_dir", ckpt, "--heads", *ALL_HEADS,
+                  "--checkpoint_dir", ckpt, *pat, "--heads", *ALL_HEADS,
                   "--aggs", "min", "mean", "last", "--results_dir", out,
                   "--bootstrap_samples", "2000", *SPLIT, "--seed", "42"])
     steps.append([PY, "-m", "eval.summarize_results", "--results_dir", out,
@@ -274,8 +284,20 @@ def lora_eval_steps():
             bon_lora]
 
 
+ROBUST_OUT = "results_final_lr3e-5"
+
+
+def copy_training_logs(lr, out):
+    """summarize_results reads the efficiency files from the results directory."""
+    os.makedirs(out, exist_ok=True)
+    for head in ALL_HEADS:
+        source = os.path.join(ABL_OUT, "train", "{0}_lr{1}".format(head, lr))
+        for suffix in ("_efficiency.json", "_loss_history.json", "_loss_curve.png"):
+            shutil.copy(os.path.join(source, head + suffix), out)
+
+
 GROUPS = ["main", "main_eval", "bce", "zeta", "seeds", "lr", "ablation_eval",
-          "long", "long_eval", "lora", "lora_eval"]
+          "long", "long_eval", "main_eval_lr3e-5", "lora", "lora_eval"]
 
 
 def main():
@@ -300,6 +322,11 @@ def main():
     steps += training_steps([g for g in ("long",) if g in args.only])
     if "long_eval" in args.only:
         steps += [(cmd, []) for cmd in long_eval_steps()]
+    if "main_eval_lr3e-5" in args.only:
+        if not args.dry_run:
+            copy_training_logs("3e-5", ROBUST_OUT)
+        steps += [(cmd, []) for cmd in main_eval_steps(
+            ROBUST_OUT, os.path.join(ABL_CKPT, "lr"), "{head}_lr3e-5_head.pt")]
     if "lora" in args.only:
         steps += lora_steps()
     if "lora_eval" in args.only:

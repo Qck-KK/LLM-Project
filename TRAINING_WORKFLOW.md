@@ -747,7 +747,7 @@ python -m analysis.bootstrap_causal_metrics   --results_dir results_final --head
 python -m analysis.holm_correction   results_final/step_metrics_ci_pairwise.csv results_final/causal_metrics_ci_pairwise.csv   --bootstrap_samples 2000
 ```
 
-输出同名的 `*_pairwise_holm.csv`，原文件不变。
+输出同名的 `*_pairwise_holm.csv`，原文件不变。差值在每次重采样中都恰为 0（两组完全相同的分数）时 p=1。比较多组以上的实验时，用 `--family prefix|suffix` 只校正有意义的配对（见 14G）。
 
 输出：`step_metrics_ci.json` / `.csv` / `_pairwise.csv`、`causal_metrics_ci.json`。
 
@@ -833,11 +833,16 @@ done
 | `seeds` | 现行协议下排名是否对种子稳健？ | attention / cnn / mlp × 种子 43、44 |
 | `lr` | 修复后 `1e-4` 是否仍是合适的学习率？ | 六个头 × {`3e-5`, `3e-4`} |
 | `ablation_eval` | 上述各组与最终头的配对 bootstrap + Holm 校正；BCE 头的 BoN | 无 |
+| `long` / `long_eval` | mlp 与 attention_pe 在修复后数据上都在第 30 轮（上限）取最佳；放宽到 60 轮重训并配对比较 | 2 次 |
+| `main_eval_lr3e-5` | 修复后 `3e-5` 对 6 个头中的 5 个 development loss 更低，于是对 `lr` 组训练出的 `3e-5` 头重跑整条评估链，检验结论是否依赖学习率 → `results_final_lr3e-5/` | 无 |
+| `lora` / `lora_eval` | 冻结编码器前提的对照（见 14E），在修复后的数据上重跑；需要装有 `transformers` 与 `peft` 的解释器（`--encoder_python`） | LoRA 1 轮，约 10 小时 |
 
 ```bash
 python run_experiments.py --dry_run                  # 先看将执行的命令
 python run_experiments.py                            # 全部执行
 python run_experiments.py --only main main_eval      # 只跑主实验
+python run_experiments.py --only lr --lrs 3e-5       # lr 组可按学习率拆给并行的多个进程
+python run_experiments.py --only lora lora_eval --encoder_python <带 transformers/peft 的 python>
 ```
 
 输出：
@@ -849,12 +854,15 @@ checkpoints/ablations/{bce,zeta,seeds,lr}/
 results_ablations/train/                             # 消融训练记录
 results_ablations/{seeds,loss_pqm_vs_bce,zeta,lr}.json 与 *_pairwise(_holm).csv
 results_ablations/bon_bce/bon_results.csv
+results_ablations/{long,lora_vs_frozen}.json、results_ablations/bon_lora/
+results_final_lr3e-5/                                # 3e-5 头的完整评估
 ```
 
 解读注意：
 
 - 不同 `zeta` 或不同 loss 的 development loss 数值**不可互相比较**（loss 定义不同），比较只看 held-out ROC-AUC / AP 与 BoN。
 - 学习率之间的比较同时看各自最佳 development loss 与 held-out AUC；若某个学习率在第 30 轮才取到最佳，说明预算不足，不能据此判定其优劣。
+- Holm 校正只在每个消融真正关心的比较之间进行（`--family`）：种子与 loss 比较同一设置下的不同头（`suffix`），zeta、学习率与 60 轮比较同一个头的不同设置（`prefix`）。把跨头又跨设置的配对也算进去没有意义，而且 2,000 次重采样的最小 p 约 0.001，族大于约 50 时任何比较都不可能显著。
 - 编码使用 `transformers`；本机的 `Training` 环境没有安装它，缓存由 `node2` 环境生成。两个环境在未受影响的记录上得到的 embedding 余弦相似度 ≥ 0.99996（fp16 舍入差异）。
 
 ## 15. 使用 Notebook 一次执行完整流程
