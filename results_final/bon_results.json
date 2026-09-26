@@ -18,6 +18,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -31,6 +33,8 @@
       "diff_vs_majority": 0.027710385620594025,
       "diff_vs_majority_ci_low": 0.022062165662646294,
       "diff_vs_majority_ci_high": 0.03347232937812805,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -44,6 +48,8 @@
       "diff_vs_majority": -0.020697498694062233,
       "diff_vs_majority_ci_low": -0.029037145897746086,
       "diff_vs_majority_ci_high": -0.012168310536071657,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -57,6 +63,8 @@
       "diff_vs_majority": -0.07107657939195633,
       "diff_vs_majority_ci_low": -0.08525397647172213,
       "diff_vs_majority_ci_high": -0.05712566385045648,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -70,6 +78,8 @@
       "diff_vs_majority": -0.1038665622472763,
       "diff_vs_majority_ci_low": -0.127369225025177,
       "diff_vs_majority_ci_high": -0.08112206310033798,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -83,6 +93,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -96,6 +108,8 @@
       "diff_vs_majority": 0.027710385620594025,
       "diff_vs_majority_ci_low": 0.022062165662646294,
       "diff_vs_majority_ci_high": 0.03347232937812805,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -109,6 +123,8 @@
       "diff_vs_majority": 0.0014783923979848623,
       "diff_vs_majority_ci_low": -0.005421720957383513,
       "diff_vs_majority_ci_high": 0.007885709055699403,
+      "p_vs_majority": 0.6836581709145427,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -122,6 +138,8 @@
       "diff_vs_majority": -0.017968159168958664,
       "diff_vs_majority_ci_low": -0.0271417704410851,
       "diff_vs_majority_ci_high": -0.008906369842588913,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -135,6 +153,8 @@
       "diff_vs_majority": -0.018195603042840958,
       "diff_vs_majority_ci_low": -0.03487490490078926,
       "diff_vs_majority_ci_high": -0.0022744503803551197,
+      "p_vs_majority": 0.02498750624687656,
+      "p_holm_vs_majority": 0.2748625687156422,
       "n_questions": 1319
     },
     {
@@ -148,6 +168,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -161,6 +183,8 @@
       "diff_vs_majority": 0.02285822667181492,
       "diff_vs_majority_ci_low": 0.017172101838514208,
       "diff_vs_majority_ci_high": 0.028430629521608353,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -174,6 +198,8 @@
       "diff_vs_majority": -0.02922668680548668,
       "diff_vs_majority_ci_low": -0.03786959499120712,
       "diff_vs_majority_ci_high": -0.0210377186536789,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -187,6 +213,8 @@
       "diff_vs_majority": -0.08605004101991653,
       "diff_vs_majority_ci_low": -0.10041698068380356,
       "diff_vs_majority_ci_high": -0.07228866796940565,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -200,6 +228,8 @@
       "diff_vs_majority": -0.11827141791582108,
       "diff_vs_majority_ci_low": -0.14253221452236176,
       "diff_vs_majority_ci_high": -0.09476876258850098,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -213,6 +243,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -226,6 +258,8 @@
       "diff_vs_majority": 0.02285822667181492,
       "diff_vs_majority_ci_low": 0.017172101838514208,
       "diff_vs_majority_ci_high": 0.028430629521608353,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -239,6 +273,8 @@
       "diff_vs_majority": 0.003070508362725377,
       "diff_vs_majority_ci_low": -0.0028440102993045,
       "diff_vs_majority_ci_high": 0.0088722520507872,
+      "p_vs_majority": 0.2868565717141429,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -252,6 +288,8 @@
       "diff_vs_majority": -0.009628506377339363,
       "diff_vs_majority_ci_low": -0.01675606477074325,
       "diff_vs_majority_ci_high": -0.00288002211018466,
+      "p_vs_majority": 0.005997001499250375,
+      "p_holm_vs_majority": 0.047976011994003,
       "n_questions": 1319
     },
     {
@@ -265,6 +303,8 @@
       "diff_vs_majority": -0.012888551689684391,
       "diff_vs_majority_ci_low": -0.027293404564261436,
       "diff_vs_majority_ci_high": 0.0015163002535700798,
+      "p_vs_majority": 0.08695652173913043,
+      "p_holm_vs_majority": 0.7826086956521738,
       "n_questions": 1319
     },
     {
@@ -278,6 +318,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -291,6 +333,8 @@
       "diff_vs_majority": 0.026952233165502548,
       "diff_vs_majority_ci_low": 0.02149165696464479,
       "diff_vs_majority_ci_high": 0.03263930743560194,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -304,6 +348,8 @@
       "diff_vs_majority": -0.023275209590792656,
       "diff_vs_majority_ci_low": -0.03161675408482552,
       "diff_vs_majority_ci_high": -0.01508718729019165,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -317,6 +363,8 @@
       "diff_vs_majority": -0.07831691205501556,
       "diff_vs_majority_ci_low": -0.09116850197315216,
       "diff_vs_majority_ci_high": -0.06466356404125694,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -330,6 +378,8 @@
       "diff_vs_majority": -0.12282031774520874,
       "diff_vs_majority_ci_low": -0.14710007570683956,
       "diff_vs_majority_ci_high": -0.09780136495828629,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -343,6 +393,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -356,6 +408,8 @@
       "diff_vs_majority": 0.026952233165502548,
       "diff_vs_majority_ci_low": 0.02149165696464479,
       "diff_vs_majority_ci_high": 0.03263930743560194,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -369,6 +423,8 @@
       "diff_vs_majority": -0.003335860325023532,
       "diff_vs_majority_ci_low": -0.010235974146053196,
       "diff_vs_majority_ci_high": 0.0032989008643198705,
+      "p_vs_majority": 0.3428285857071464,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -382,6 +438,8 @@
       "diff_vs_majority": -0.02619408257305622,
       "diff_vs_majority_ci_low": -0.035746775567531586,
       "diff_vs_majority_ci_high": -0.01671626088209451,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -395,6 +453,8 @@
       "diff_vs_majority": -0.024260804057121277,
       "diff_vs_majority_ci_low": -0.042456407099962234,
       "diff_vs_majority_ci_high": -0.006823351141065359,
+      "p_vs_majority": 0.00399800099950025,
+      "p_holm_vs_majority": 0.051974012993503245,
       "n_questions": 1319
     },
     {
@@ -408,6 +468,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -421,6 +483,8 @@
       "diff_vs_majority": 0.019711902365088463,
       "diff_vs_majority_ci_low": 0.01440485194325447,
       "diff_vs_majority_ci_high": 0.024868273641914126,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -434,6 +498,8 @@
       "diff_vs_majority": -0.028316905722022057,
       "diff_vs_majority_ci_low": -0.03684704517945647,
       "diff_vs_majority_ci_high": -0.019901441363617777,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -447,6 +513,8 @@
       "diff_vs_majority": -0.07463987916707993,
       "diff_vs_majority_ci_low": -0.08939253073185682,
       "diff_vs_majority_ci_high": -0.06050037955865264,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -460,6 +528,8 @@
       "diff_vs_majority": -0.10538286715745926,
       "diff_vs_majority_ci_low": -0.13042077384889125,
       "diff_vs_majority_ci_high": -0.0803639143705368,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -473,6 +543,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -486,6 +558,8 @@
       "diff_vs_majority": 0.019711902365088463,
       "diff_vs_majority_ci_low": 0.01440485194325447,
       "diff_vs_majority_ci_high": 0.024868273641914126,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -499,6 +573,8 @@
       "diff_vs_majority": -0.009325245395302773,
       "diff_vs_majority_ci_low": -0.016301176976412535,
       "diff_vs_majority_ci_high": -0.0024260810925625263,
+      "p_vs_majority": 0.0079960019990005,
+      "p_holm_vs_majority": 0.07996001999000499,
       "n_questions": 1319
     },
     {
@@ -512,6 +588,8 @@
       "diff_vs_majority": -0.0251705851405859,
       "diff_vs_majority_ci_low": -0.03537149550393224,
       "diff_vs_majority_ci_high": -0.014973464421927929,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -525,6 +603,8 @@
       "diff_vs_majority": -0.018953753635287285,
       "diff_vs_majority_ci_low": -0.036391206085681915,
       "diff_vs_majority_ci_high": -0.0022744503803551197,
+      "p_vs_majority": 0.026986506746626688,
+      "p_holm_vs_majority": 0.2748625687156422,
       "n_questions": 1319
     },
     {
@@ -538,6 +618,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -551,6 +633,8 @@
       "diff_vs_majority": 0.021607277914881706,
       "diff_vs_majority_ci_low": 0.015920203598216175,
       "diff_vs_majority_ci_high": 0.02702994751743971,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -564,6 +648,8 @@
       "diff_vs_majority": -0.02884761057794094,
       "diff_vs_majority_ci_low": -0.03722516819834709,
       "diff_vs_majority_ci_high": -0.02073445767164231,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -577,6 +663,8 @@
       "diff_vs_majority": -0.08108415454626083,
       "diff_vs_majority_ci_low": -0.09522554576396942,
       "diff_vs_majority_ci_high": -0.0671721026301384,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -590,6 +678,8 @@
       "diff_vs_majority": -0.12130402028560638,
       "diff_vs_majority_ci_low": -0.14556482434272766,
       "diff_vs_majority_ci_high": -0.09704321622848511,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -603,6 +693,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -616,6 +708,8 @@
       "diff_vs_majority": 0.021607277914881706,
       "diff_vs_majority_ci_low": 0.015920203598216175,
       "diff_vs_majority_ci_high": 0.02702994751743971,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -629,6 +723,8 @@
       "diff_vs_majority": 0.006595904938876629,
       "diff_vs_majority_ci_low": 0.001249051984632388,
       "diff_vs_majority_ci_high": 0.011713419109582901,
+      "p_vs_majority": 0.015992003998001,
+      "p_holm_vs_majority": 0.14392803598200898,
       "n_questions": 1319
     },
     {
@@ -642,6 +738,8 @@
       "diff_vs_majority": -0.003563304664567113,
       "diff_vs_majority_ci_low": -0.009780135960318148,
       "diff_vs_majority_ci_high": 0.0027672483178321273,
+      "p_vs_majority": 0.2638680659670165,
+      "p_holm_vs_majority": 0.7916041979010495,
       "n_questions": 1319
     },
     {
@@ -655,6 +753,8 @@
       "diff_vs_majority": 0.007581501267850399,
       "diff_vs_majority_ci_low": -0.006065201014280319,
       "diff_vs_majority_ci_high": 0.019711902365088463,
+      "p_vs_majority": 0.28285857071464265,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -668,6 +768,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -681,6 +783,8 @@
       "diff_vs_majority": 0.02486732229590416,
       "diff_vs_majority_ci_low": 0.019257014617323875,
       "diff_vs_majority_ci_high": 0.03051554230041802,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -694,6 +798,8 @@
       "diff_vs_majority": -0.02714177407324314,
       "diff_vs_majority_ci_low": -0.03552027940750122,
       "diff_vs_majority_ci_high": -0.019067475525662302,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -707,6 +813,8 @@
       "diff_vs_majority": -0.08468536287546158,
       "diff_vs_majority_ci_low": -0.09795583505183458,
       "diff_vs_majority_ci_high": -0.071530519425869,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -720,6 +828,8 @@
       "diff_vs_majority": -0.11827141791582108,
       "diff_vs_majority_ci_low": -0.14253221452236176,
       "diff_vs_majority_ci_high": -0.09476876258850098,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -733,6 +843,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -746,6 +858,8 @@
       "diff_vs_majority": 0.02486732229590416,
       "diff_vs_majority_ci_low": 0.019257014617323875,
       "diff_vs_majority_ci_high": 0.03051554230041802,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -759,6 +873,8 @@
       "diff_vs_majority": 0.002918878337368369,
       "diff_vs_majority_ci_low": -0.003260044858325273,
       "diff_vs_majority_ci_high": 0.008794541493989528,
+      "p_vs_majority": 0.3548225887056472,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -772,6 +888,8 @@
       "diff_vs_majority": -0.008491281419992447,
       "diff_vs_majority_ci_low": -0.01611258564516902,
       "diff_vs_majority_ci_high": -0.0008339659369084984,
+      "p_vs_majority": 0.030984507746126936,
+      "p_holm_vs_majority": 0.18590704647676162,
       "n_questions": 1319
     },
     {
@@ -785,6 +903,8 @@
       "diff_vs_majority": -0.0007581501267850399,
       "diff_vs_majority_ci_low": -0.015940106846392153,
       "diff_vs_majority_ci_high": 0.013665656023658709,
+      "p_vs_majority": 0.9265367316341829,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -798,6 +918,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -811,6 +933,8 @@
       "diff_vs_majority": 0.023047761991620064,
       "diff_vs_majority_ci_low": 0.017589082894846796,
       "diff_vs_majority_ci_high": 0.028430629521608353,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -824,6 +948,8 @@
       "diff_vs_majority": -0.02987111359834671,
       "diff_vs_majority_ci_low": -0.03874241346493364,
       "diff_vs_majority_ci_high": -0.02115239007398486,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -837,6 +963,8 @@
       "diff_vs_majority": -0.0805155485868454,
       "diff_vs_majority_ci_low": -0.09412433225661516,
       "diff_vs_majority_ci_high": -0.06648786831647159,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -850,6 +978,8 @@
       "diff_vs_majority": -0.1175132691860199,
       "diff_vs_majority_ci_low": -0.14177407324314117,
       "diff_vs_majority_ci_high": -0.0940106138586998,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -863,6 +993,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -876,6 +1008,8 @@
       "diff_vs_majority": 0.023047761991620064,
       "diff_vs_majority_ci_low": 0.017589082894846796,
       "diff_vs_majority_ci_high": 0.028430629521608353,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -889,6 +1023,8 @@
       "diff_vs_majority": -0.007467777468264103,
       "diff_vs_majority_ci_low": -0.014329035789705813,
       "diff_vs_majority_ci_high": -0.0008718723271158524,
+      "p_vs_majority": 0.02798600699650175,
+      "p_holm_vs_majority": 0.223888055972014,
       "n_questions": 1319
     },
     {
@@ -902,6 +1038,8 @@
       "diff_vs_majority": -0.02282031811773777,
       "diff_vs_majority_ci_low": -0.03199488436803222,
       "diff_vs_majority_ci_high": -0.014177406206727028,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -915,6 +1053,8 @@
       "diff_vs_majority": -0.02047005295753479,
       "diff_vs_majority_ci_low": -0.03714935481548309,
       "diff_vs_majority_ci_high": -0.0052880971343257565,
+      "p_vs_majority": 0.01199400299850075,
+      "p_holm_vs_majority": 0.14392803598200898,
       "n_questions": 1319
     },
     {
@@ -928,6 +1068,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -941,6 +1083,8 @@
       "diff_vs_majority": 0.02312357909977436,
       "diff_vs_majority_ci_low": 0.01781652681529522,
       "diff_vs_majority_ci_high": 0.028658073395490646,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -954,6 +1098,8 @@
       "diff_vs_majority": -0.027028052136301994,
       "diff_vs_majority_ci_low": -0.03590125273913145,
       "diff_vs_majority_ci_high": -0.018763266876339918,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -967,6 +1113,8 @@
       "diff_vs_majority": -0.073692187666893,
       "diff_vs_majority_ci_low": -0.08843820542097092,
       "diff_vs_majority_ci_high": -0.05970336748287082,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -980,6 +1128,8 @@
       "diff_vs_majority": -0.10159211605787277,
       "diff_vs_majority_ci_low": -0.12585291266441345,
       "diff_vs_majority_ci_high": -0.0773313120007515,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -993,6 +1143,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1006,6 +1158,8 @@
       "diff_vs_majority": 0.02312357909977436,
       "diff_vs_majority_ci_low": 0.01781652681529522,
       "diff_vs_majority_ci_high": 0.028658073395490646,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1019,6 +1173,8 @@
       "diff_vs_majority": 0.007505686022341251,
       "diff_vs_majority_ci_low": 0.0019332829309860245,
       "diff_vs_majority_ci_high": 0.012812736490741373,
+      "p_vs_majority": 0.00399800099950025,
+      "p_holm_vs_majority": 0.047976011994003,
       "n_questions": 1319
     },
     {
@@ -1032,6 +1188,8 @@
       "diff_vs_majority": -0.0020090981852263212,
       "diff_vs_majority_ci_low": -0.008719675708562136,
       "diff_vs_majority_ci_high": 0.004662622697651386,
+      "p_vs_majority": 0.5487256371814093,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1045,6 +1203,8 @@
       "diff_vs_majority": 0.0030326005071401596,
       "diff_vs_majority_ci_low": -0.010614101774990559,
       "diff_vs_majority_ci_high": 0.016679301857948303,
+      "p_vs_majority": 0.7426286856571714,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1058,6 +1218,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1071,6 +1233,8 @@
       "diff_vs_majority": 0.027672478929162025,
       "diff_vs_majority_ci_low": 0.022289615124464035,
       "diff_vs_majority_ci_high": 0.03316906839609146,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1084,6 +1248,8 @@
       "diff_vs_majority": -0.023616377264261246,
       "diff_vs_majority_ci_low": -0.0326014026068151,
       "diff_vs_majority_ci_high": -0.015463418606668727,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1097,6 +1263,8 @@
       "diff_vs_majority": -0.0739196389913559,
       "diff_vs_majority_ci_low": -0.08723370544612408,
       "diff_vs_majority_ci_high": -0.060197125840932134,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1110,6 +1278,8 @@
       "diff_vs_majority": -0.10159211605787277,
       "diff_vs_majority_ci_low": -0.12661106884479523,
       "diff_vs_majority_ci_high": -0.07808946073055267,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1123,6 +1293,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1136,6 +1308,8 @@
       "diff_vs_majority": 0.027672478929162025,
       "diff_vs_majority_ci_low": 0.022289615124464035,
       "diff_vs_majority_ci_high": 0.03316906839609146,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1149,6 +1323,8 @@
       "diff_vs_majority": 0.0044351788237690926,
       "diff_vs_majority_ci_low": -0.0019351763796294106,
       "diff_vs_majority_ci_high": 0.010538287460803986,
+      "p_vs_majority": 0.18190904547726136,
+      "p_holm_vs_majority": 0.9095452273863068,
       "n_questions": 1319
     },
     {
@@ -1162,6 +1338,8 @@
       "diff_vs_majority": -0.00780894560739398,
       "diff_vs_majority_ci_low": -0.01580837699584663,
       "diff_vs_majority_ci_high": 0.0006074680481105992,
+      "p_vs_majority": 0.07396301849075462,
+      "p_holm_vs_majority": 0.3448275862068966,
       "n_questions": 1319
     },
     {
@@ -1175,6 +1353,8 @@
       "diff_vs_majority": -0.0007581501267850399,
       "diff_vs_majority_ci_low": -0.016679301857948303,
       "diff_vs_majority_ci_high": 0.015163002535700798,
+      "p_vs_majority": 0.9345327336331835,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1188,6 +1368,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1201,6 +1383,8 @@
       "diff_vs_majority": 0.021948445588350296,
       "diff_vs_majority_ci_low": 0.016603488428518175,
       "diff_vs_majority_ci_high": 0.027445035055279732,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1214,6 +1398,8 @@
       "diff_vs_majority": -0.03460955247282982,
       "diff_vs_majority_ci_low": -0.04329131692647934,
       "diff_vs_majority_ci_high": -0.025888931751251232,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1227,6 +1413,8 @@
       "diff_vs_majority": -0.08586049824953079,
       "diff_vs_majority_ci_low": -0.09920773506164551,
       "diff_vs_majority_ci_high": -0.07111353278160096,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1240,6 +1428,8 @@
       "diff_vs_majority": -0.11675512045621872,
       "diff_vs_majority_ci_low": -0.1410159170627594,
       "diff_vs_majority_ci_high": -0.09325246512889862,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1253,6 +1443,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1266,6 +1458,8 @@
       "diff_vs_majority": 0.021948445588350296,
       "diff_vs_majority_ci_low": 0.016603488428518175,
       "diff_vs_majority_ci_high": 0.027445035055279732,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1279,6 +1473,8 @@
       "diff_vs_majority": -0.015428354032337666,
       "diff_vs_majority_ci_low": -0.022554963873699308,
       "diff_vs_majority_ci_high": -0.00826288796961308,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1292,6 +1488,8 @@
       "diff_vs_majority": -0.0369219109416008,
       "diff_vs_majority_ci_low": -0.04700625455006957,
       "diff_vs_majority_ci_high": -0.02668593679554761,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1305,6 +1503,8 @@
       "diff_vs_majority": -0.03184230625629425,
       "diff_vs_majority_ci_low": -0.050796058028936386,
       "diff_vs_majority_ci_high": -0.01440485194325447,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1318,6 +1518,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1331,6 +1533,8 @@
       "diff_vs_majority": 0.01982562430202961,
       "diff_vs_majority_ci_low": 0.014365995721891522,
       "diff_vs_majority_ci_high": 0.02562642055563628,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1344,6 +1548,8 @@
       "diff_vs_majority": -0.03491281345486641,
       "diff_vs_majority_ci_low": -0.04363154247403145,
       "diff_vs_majority_ci_high": -0.026306862430647022,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1357,6 +1563,8 @@
       "diff_vs_majority": -0.08771796524524689,
       "diff_vs_majority_ci_low": -0.10102445036172866,
       "diff_vs_majority_ci_high": -0.07391395270824436,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1370,6 +1578,8 @@
       "diff_vs_majority": -0.1175132691860199,
       "diff_vs_majority_ci_low": -0.14025777578353882,
       "diff_vs_majority_ci_high": -0.0940106138586998,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1383,6 +1593,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1396,6 +1608,8 @@
       "diff_vs_majority": 0.01982562430202961,
       "diff_vs_majority_ci_low": 0.014365995721891522,
       "diff_vs_majority_ci_high": 0.02562642055563628,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1409,6 +1623,8 @@
       "diff_vs_majority": -0.005269143730401993,
       "diff_vs_majority_ci_low": -0.01190390579868108,
       "diff_vs_majority_ci_high": 0.001364670120528899,
+      "p_vs_majority": 0.12293853073463268,
+      "p_holm_vs_majority": 0.7376311844077961,
       "n_questions": 1319
     },
     {
@@ -1422,6 +1638,8 @@
       "diff_vs_majority": -0.02153146266937256,
       "diff_vs_majority_ci_low": -0.029984835535287857,
       "diff_vs_majority_ci_high": -0.01322877076454461,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1435,6 +1653,8 @@
       "diff_vs_majority": -0.011372251436114311,
       "diff_vs_majority_ci_low": -0.028051553294062614,
       "diff_vs_majority_ci_high": 0.004548900760710239,
+      "p_vs_majority": 0.16391804097951024,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1448,6 +1668,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1461,6 +1683,8 @@
       "diff_vs_majority": 0.018953753635287285,
       "diff_vs_majority_ci_low": 0.013684608973562717,
       "diff_vs_majority_ci_high": 0.024489199230447407,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1474,6 +1698,8 @@
       "diff_vs_majority": -0.035102348774671555,
       "diff_vs_majority_ci_low": -0.044165086653083566,
       "diff_vs_majority_ci_high": -0.026421530172228813,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1487,6 +1713,8 @@
       "diff_vs_majority": -0.08665656298398972,
       "diff_vs_majority_ci_low": -0.10000094175338745,
       "diff_vs_majority_ci_high": -0.07278051655739547,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1500,6 +1728,8 @@
       "diff_vs_majority": -0.12206216901540756,
       "diff_vs_majority_ci_low": -0.14556482434272766,
       "diff_vs_majority_ci_high": -0.09931766241788864,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1513,6 +1743,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1526,6 +1758,8 @@
       "diff_vs_majority": 0.018953753635287285,
       "diff_vs_majority_ci_low": 0.013684608973562717,
       "diff_vs_majority_ci_high": 0.024489199230447407,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1539,6 +1773,8 @@
       "diff_vs_majority": -0.016603486612439156,
       "diff_vs_majority_ci_low": -0.02373388991691172,
       "diff_vs_majority_ci_high": -0.009589651995338505,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1552,6 +1788,8 @@
       "diff_vs_majority": -0.04131918400526047,
       "diff_vs_majority_ci_low": -0.05170583724975586,
       "diff_vs_majority_ci_high": -0.03119313917122784,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1565,6 +1803,8 @@
       "diff_vs_majority": -0.042456407099962234,
       "diff_vs_majority_ci_low": -0.06065201014280319,
       "diff_vs_majority_ci_high": -0.025018954649567604,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1578,6 +1818,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1591,6 +1833,8 @@
       "diff_vs_majority": 0.021341923624277115,
       "diff_vs_majority_ci_low": 0.01580743114463985,
       "diff_vs_majority_ci_high": 0.026725738821551197,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1604,6 +1848,8 @@
       "diff_vs_majority": -0.038438208401203156,
       "diff_vs_majority_ci_low": -0.04731046324595809,
       "diff_vs_majority_ci_high": -0.029679679218679676,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1617,6 +1863,8 @@
       "diff_vs_majority": -0.09128127247095108,
       "diff_vs_majority_ci_low": -0.10557335019111633,
       "diff_vs_majority_ci_high": -0.07755780816078187,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1630,6 +1878,8 @@
       "diff_vs_majority": -0.12130402028560638,
       "diff_vs_majority_ci_low": -0.14556482434272766,
       "diff_vs_majority_ci_high": -0.09931766241788864,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1643,6 +1893,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1656,6 +1908,8 @@
       "diff_vs_majority": 0.021341923624277115,
       "diff_vs_majority_ci_low": 0.01580743114463985,
       "diff_vs_majority_ci_high": 0.026725738821551197,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1669,6 +1923,8 @@
       "diff_vs_majority": 0.005458680447191,
       "diff_vs_majority_ci_low": -0.0004937446356052533,
       "diff_vs_majority_ci_high": 0.011106899939477444,
+      "p_vs_majority": 0.07796101949025487,
+      "p_holm_vs_majority": 0.545727136431784,
       "n_questions": 1319
     },
     {
@@ -1682,6 +1938,8 @@
       "diff_vs_majority": -0.002198635833337903,
       "diff_vs_majority_ci_low": -0.0088703558081761,
       "diff_vs_majority_ci_high": 0.004322403634432698,
+      "p_vs_majority": 0.526736631684158,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1695,6 +1953,8 @@
       "diff_vs_majority": 0.009097801521420479,
       "diff_vs_majority_ci_low": -0.005307050887495279,
       "diff_vs_majority_ci_high": 0.022744502872228622,
+      "p_vs_majority": 0.24087956021989004,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1708,6 +1968,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1721,6 +1983,8 @@
       "diff_vs_majority": 0.023578466847538948,
       "diff_vs_majority_ci_low": 0.017891394393518566,
       "diff_vs_majority_ci_high": 0.02907884707674382,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1734,6 +1998,8 @@
       "diff_vs_majority": -0.027103867381811142,
       "diff_vs_majority_ci_low": -0.03597422316670418,
       "diff_vs_majority_ci_high": -0.018877938389778137,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1747,6 +2013,8 @@
       "diff_vs_majority": -0.07528430223464966,
       "diff_vs_majority_ci_low": -0.08984268736094236,
       "diff_vs_majority_ci_high": -0.06114006787538531,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1760,6 +2028,8 @@
       "diff_vs_majority": -0.10310841351747513,
       "diff_vs_majority_ci_low": -0.12812736630439758,
       "diff_vs_majority_ci_high": -0.07808946073055267,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1773,6 +2043,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1786,6 +2058,8 @@
       "diff_vs_majority": 0.023578466847538948,
       "diff_vs_majority_ci_low": 0.017891394393518566,
       "diff_vs_majority_ci_high": 0.02907884707674382,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1799,6 +2073,8 @@
       "diff_vs_majority": 0.012016679160296917,
       "diff_vs_majority_ci_low": 0.006479341327212751,
       "diff_vs_majority_ci_high": 0.017324680043384427,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1812,6 +2088,8 @@
       "diff_vs_majority": 0.005610310472548008,
       "diff_vs_majority_ci_low": -0.00038002220608177587,
       "diff_vs_majority_ci_high": 0.011600644816644485,
+      "p_vs_majority": 0.06896551724137931,
+      "p_holm_vs_majority": 0.3448275862068966,
       "n_questions": 1319
     },
     {
@@ -1825,6 +2103,8 @@
       "diff_vs_majority": 0.010614101774990559,
       "diff_vs_majority_ci_low": -0.0030326005071401596,
       "diff_vs_majority_ci_high": 0.02350265346467495,
+      "p_vs_majority": 0.13993003498250875,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1838,6 +2118,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1851,6 +2133,8 @@
       "diff_vs_majority": 0.024943137541413307,
       "diff_vs_majority_ci_low": 0.019218156533315777,
       "diff_vs_majority_ci_high": 0.030402766214683647,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1864,6 +2148,8 @@
       "diff_vs_majority": -0.02312357723712921,
       "diff_vs_majority_ci_low": -0.03184420168399811,
       "diff_vs_majority_ci_high": -0.015010422584600752,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1877,6 +2163,8 @@
       "diff_vs_majority": -0.06902956962585449,
       "diff_vs_majority_ci_low": -0.08324677795171738,
       "diff_vs_majority_ci_high": -0.05568613093346357,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1890,6 +2178,8 @@
       "diff_vs_majority": -0.09552691131830215,
       "diff_vs_majority_ci_low": -0.12056482527405024,
       "diff_vs_majority_ci_high": -0.06974980980157852,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1903,6 +2193,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1916,6 +2208,8 @@
       "diff_vs_majority": 0.024943137541413307,
       "diff_vs_majority_ci_low": 0.019218156533315777,
       "diff_vs_majority_ci_high": 0.030402766214683647,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1929,6 +2223,8 @@
       "diff_vs_majority": 0.012471569702029228,
       "diff_vs_majority_ci_low": 0.006594958191271871,
       "diff_vs_majority_ci_high": 0.018158643972128626,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1942,6 +2238,8 @@
       "diff_vs_majority": 0.007505686022341251,
       "diff_vs_majority_ci_low": 0.0010614102880936115,
       "diff_vs_majority_ci_high": 0.013988817599602039,
+      "p_vs_majority": 0.01899050474762619,
+      "p_holm_vs_majority": 0.1329335332333833,
       "n_questions": 1319
     },
     {
@@ -1955,6 +2253,8 @@
       "diff_vs_majority": 0.010614101774990559,
       "diff_vs_majority_ci_low": -0.0037907506339251995,
       "diff_vs_majority_ci_high": 0.024260804057121277,
+      "p_vs_majority": 0.16391804097951024,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1968,6 +2268,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -1981,6 +2283,8 @@
       "diff_vs_majority": 0.019370732828974724,
       "diff_vs_majority_ci_low": 0.014252273738384247,
       "diff_vs_majority_ci_high": 0.024868270009756083,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -1994,6 +2298,8 @@
       "diff_vs_majority": -0.03415466472506523,
       "diff_vs_majority_ci_low": -0.04321455582976341,
       "diff_vs_majority_ci_high": -0.025435935612767933,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2007,6 +2313,8 @@
       "diff_vs_majority": -0.0890447273850441,
       "diff_vs_majority_ci_low": -0.10269333701580763,
       "diff_vs_majority_ci_high": -0.07448540199548008,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2020,6 +2328,8 @@
       "diff_vs_majority": -0.11144806444644928,
       "diff_vs_majority_ci_low": -0.13495072722434998,
       "diff_vs_majority_ci_high": -0.087187260389328,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2033,6 +2343,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -2046,6 +2358,8 @@
       "diff_vs_majority": 0.019370732828974724,
       "diff_vs_majority_ci_low": 0.014252273738384247,
       "diff_vs_majority_ci_high": 0.024868270009756083,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2059,6 +2373,8 @@
       "diff_vs_majority": -0.014897649176418781,
       "diff_vs_majority_ci_low": -0.021911486517637968,
       "diff_vs_majority_ci_high": -0.007655420224182318,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2072,6 +2388,8 @@
       "diff_vs_majority": -0.03616376221179962,
       "diff_vs_majority_ci_low": -0.04586808020249009,
       "diff_vs_majority_ci_high": -0.026152388891205212,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2085,6 +2403,8 @@
       "diff_vs_majority": -0.03411675617098808,
       "diff_vs_majority_ci_low": -0.05307050794363022,
       "diff_vs_majority_ci_high": -0.015921153128147125,
+      "p_vs_majority": 0.001999000499750125,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2098,6 +2418,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -2111,6 +2433,8 @@
       "diff_vs_majority": 0.019977256655693054,
       "diff_vs_majority_ci_low": 0.014745070063509048,
       "diff_vs_majority_ci_high": 0.025361069990321988,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2124,6 +2448,8 @@
       "diff_vs_majority": -0.03419256955385208,
       "diff_vs_majority_ci_low": -0.04298710823059082,
       "diff_vs_majority_ci_high": -0.025625476520508526,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2137,6 +2463,8 @@
       "diff_vs_majority": -0.09249430894851685,
       "diff_vs_majority_ci_low": -0.10614575427025556,
       "diff_vs_majority_ci_high": -0.07816433012485505,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2150,6 +2478,8 @@
       "diff_vs_majority": -0.12357846647500992,
       "diff_vs_majority_ci_low": -0.14634191952645778,
       "diff_vs_majority_ci_high": -0.09931766241788864,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2163,6 +2493,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -2176,6 +2508,8 @@
       "diff_vs_majority": 0.019977256655693054,
       "diff_vs_majority_ci_low": 0.014745070063509048,
       "diff_vs_majority_ci_high": 0.025361069990321988,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2189,6 +2523,8 @@
       "diff_vs_majority": -0.010083396919071674,
       "diff_vs_majority_ci_low": -0.016680249525234104,
       "diff_vs_majority_ci_high": -0.0033728198090102576,
+      "p_vs_majority": 0.005997001499250375,
+      "p_holm_vs_majority": 0.06596701649175413,
       "n_questions": 1319
     },
     {
@@ -2202,6 +2538,8 @@
       "diff_vs_majority": -0.027445035055279732,
       "diff_vs_majority_ci_low": -0.03631634023040533,
       "diff_vs_majority_ci_high": -0.018381349556148074,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2215,6 +2553,8 @@
       "diff_vs_majority": -0.03184230625629425,
       "diff_vs_majority_ci_low": -0.04776345565915108,
       "diff_vs_majority_ci_high": -0.015163002535700798,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2228,6 +2568,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -2241,6 +2583,8 @@
       "diff_vs_majority": 0.018877936527132988,
       "diff_vs_majority_ci_low": 0.013532978482544422,
       "diff_vs_majority_ci_high": 0.024413382215425366,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2254,6 +2598,8 @@
       "diff_vs_majority": -0.03483699634671211,
       "diff_vs_majority_ci_low": -0.04367039119824767,
       "diff_vs_majority_ci_high": -0.026155228307470683,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2267,6 +2613,8 @@
       "diff_vs_majority": -0.092380590736866,
       "diff_vs_majority_ci_low": -0.10550511479377747,
       "diff_vs_majority_ci_high": -0.07759667187929153,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2280,6 +2628,8 @@
       "diff_vs_majority": -0.1205458715558052,
       "diff_vs_majority_ci_low": -0.14330932460725307,
       "diff_vs_majority_ci_high": -0.09702426251024018,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2293,6 +2643,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": 1.0,
+      "p_holm_vs_majority": 1.0,
       "n_questions": 1319
     },
     {
@@ -2306,6 +2658,8 @@
       "diff_vs_majority": 0.018877936527132988,
       "diff_vs_majority_ci_low": 0.013532978482544422,
       "diff_vs_majority_ci_high": 0.024413382215425366,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2319,6 +2673,8 @@
       "diff_vs_majority": -0.015011370182037354,
       "diff_vs_majority_ci_low": -0.021911486517637968,
       "diff_vs_majority_ci_high": -0.007771037984639406,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2332,6 +2688,8 @@
       "diff_vs_majority": -0.03586050122976303,
       "diff_vs_majority_ci_low": -0.04590693637728691,
       "diff_vs_majority_ci_high": -0.025586618436500435,
+      "p_vs_majority": 0.0009995002498750624,
+      "p_holm_vs_majority": 0.035982008995502246,
       "n_questions": 1319
     },
     {
@@ -2345,6 +2703,8 @@
       "diff_vs_majority": -0.02880970388650894,
       "diff_vs_majority_ci_low": -0.0470053069293499,
       "diff_vs_majority_ci_high": -0.011372251436114311,
+      "p_vs_majority": 0.0029985007496251873,
+      "p_holm_vs_majority": 0.041979010494752625,
       "n_questions": 1319
     },
     {
@@ -2358,6 +2718,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2371,6 +2733,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2384,6 +2748,8 @@
       "diff_vs_majority": -0.0703563243150711,
       "diff_vs_majority_ci_low": -0.07721853405237197,
       "diff_vs_majority_ci_high": -0.06398692559450865,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2397,6 +2763,8 @@
       "diff_vs_majority": -0.12270659953355789,
       "diff_vs_majority_ci_low": -0.13309326767921448,
       "diff_vs_majority_ci_high": -0.11224223338067532,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2410,6 +2778,8 @@
       "diff_vs_majority": -0.1372251659631729,
       "diff_vs_majority_ci_low": -0.1607278287410736,
       "diff_vs_majority_ci_high": -0.11448066681623459,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2423,6 +2793,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2436,6 +2808,8 @@
       "diff_vs_majority": 0.12323730438947678,
       "diff_vs_majority_ci_low": 0.11656557768583298,
       "diff_vs_majority_ci_high": 0.12994693219661713,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2449,6 +2823,8 @@
       "diff_vs_majority": 0.18047761917114258,
       "diff_vs_majority_ci_low": 0.17058376967906952,
       "diff_vs_majority_ci_high": 0.19059989675879477,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2462,6 +2838,8 @@
       "diff_vs_majority": 0.2333965003490448,
       "diff_vs_majority_ci_low": 0.21826953887939454,
       "diff_vs_majority_ci_high": 0.24935653135180472,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2475,6 +2853,8 @@
       "diff_vs_majority": 0.2949203848838806,
       "diff_vs_majority_ci_low": 0.269143283367157,
       "diff_vs_majority_ci_high": 0.32069748640060425,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2488,6 +2868,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2501,6 +2883,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2514,6 +2898,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2527,6 +2913,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     },
     {
@@ -2540,6 +2928,8 @@
       "diff_vs_majority": 0.0,
       "diff_vs_majority_ci_low": 0.0,
       "diff_vs_majority_ci_high": 0.0,
+      "p_vs_majority": NaN,
+      "p_holm_vs_majority": NaN,
       "n_questions": 1319
     }
   ]

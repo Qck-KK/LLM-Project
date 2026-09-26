@@ -23,7 +23,10 @@ Each head is used in two ways (column `method`):
   it is the fairer test of whether the reward adds anything on top of it.
 
 Every row also carries its paired difference to `majority_vote`, bootstrapped
-over the same question resamples.
+over the same question resamples, a two-sided bootstrap p-value for it, and a
+Holm-adjusted p-value. The Holm family is every head/aggregation/method row at
+the same k: picking the best of many selectors after the fact is exactly the
+multiple comparison this guards against.
 
 For k < N each question is evaluated over several random subsets of its 16
 candidates, so the curve does not depend on the arbitrary generation order.
@@ -45,6 +48,7 @@ from eval.eval_utils import (
     aggregate_trajectory_scores,
     get_device,
 )
+from analysis.holm_correction import bootstrap_p_value, holm_adjust
 from reward_heads import build_reward_head
 
 
@@ -228,13 +232,16 @@ def main():
             point = float(per_question.mean())
             samples = [float(per_question[pick].mean()) for pick in question_draws]
             low, high = percentile_ci(samples)
-            diff = diff_low = diff_high = float("nan")
+            diff = diff_low = diff_high = p_value = float("nan")
             if majority is not None:
                 delta = per_question - majority[k]
                 diff = float(delta.mean())
-                diff_low, diff_high = percentile_ci(
-                    [float(delta[pick].mean()) for pick in question_draws]
-                )
+                resampled = [float(delta[pick].mean()) for pick in question_draws]
+                diff_low, diff_high = percentile_ci(resampled)
+                if method != "reference":
+                    p_value = bootstrap_p_value(
+                        sum(d > 0 for d in resampled) / len(resampled), len(resampled),
+                        sum(d < 0 for d in resampled) / len(resampled))
             rows.append({
                 "head": head_name,
                 "agg": agg,
@@ -246,8 +253,15 @@ def main():
                 "diff_vs_majority": diff,
                 "diff_vs_majority_ci_low": diff_low,
                 "diff_vs_majority_ci_high": diff_high,
+                "p_vs_majority": p_value,
+                "p_holm_vs_majority": float("nan"),
                 "n_questions": n_questions,
             })
+
+    for k in args.ks:
+        family = [row for row in rows if row["k"] == k and row["p_vs_majority"] == row["p_vs_majority"]]
+        for row, adjusted in zip(family, holm_adjust([row["p_vs_majority"] for row in family])):
+            row["p_holm_vs_majority"] = adjusted
 
     out_csv = os.path.join(args.results_dir, "bon_results.csv")
     with open(out_csv, "w", newline="") as f:
