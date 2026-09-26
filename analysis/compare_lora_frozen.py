@@ -170,6 +170,9 @@ def main():
                 row[metric + "_prob_a_better"] = (
                     sum(1 for d in finite if d > 0) / len(finite) if finite else float("nan")
                 )
+                row[metric + "_prob_a_worse"] = (
+                    sum(1 for d in finite if d < 0) / len(finite) if finite else float("nan")
+                )
                 row[metric + "_significant"] = bool(low > 0 or high < 0)
             pairs.append(row)
     summary["pairwise"] = pairs

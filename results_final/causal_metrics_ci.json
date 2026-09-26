@@ -74,6 +74,7 @@
       "causal_roc_auc_diff_ci_low": -0.07903881520032882,
       "causal_roc_auc_diff_ci_high": -0.062022541463375096,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -83,6 +84,7 @@
       "causal_roc_auc_diff_ci_low": -0.03044387549161911,
       "causal_roc_auc_diff_ci_high": -0.00815571546554566,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -92,6 +94,7 @@
       "causal_roc_auc_diff_ci_low": -0.07534757554531098,
       "causal_roc_auc_diff_ci_high": -0.05470800250768662,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -101,6 +104,7 @@
       "causal_roc_auc_diff_ci_low": -0.06955446898937226,
       "causal_roc_auc_diff_ci_high": -0.047169870138168334,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -110,6 +114,7 @@
       "causal_roc_auc_diff_ci_low": -0.08936634808778762,
       "causal_roc_auc_diff_ci_high": -0.06287172287702561,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -119,6 +124,7 @@
       "causal_roc_auc_diff_ci_low": 0.04278378188610077,
       "causal_roc_auc_diff_ci_high": 0.059404736757278434,
       "causal_roc_auc_prob_a_better": 1.0,
+      "causal_roc_auc_prob_a_worse": 0.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -128,6 +134,7 @@
       "causal_roc_auc_diff_ci_low": -0.001943683624267578,
       "causal_roc_auc_diff_ci_high": 0.012820078432559967,
       "causal_roc_auc_prob_a_better": 0.9225,
+      "causal_roc_auc_prob_a_worse": 0.0775,
       "causal_roc_auc_significant": false
     },
     {
@@ -137,6 +144,7 @@
       "causal_roc_auc_diff_ci_low": 0.004211196303367614,
       "causal_roc_auc_diff_ci_high": 0.020774875581264493,
       "causal_roc_auc_prob_a_better": 0.9985,
+      "causal_roc_auc_prob_a_worse": 0.0015,
       "causal_roc_auc_significant": true
     },
     {
@@ -146,6 +154,7 @@
       "causal_roc_auc_diff_ci_low": -0.015268690884113312,
       "causal_roc_auc_diff_ci_high": 0.004001533985137939,
       "causal_roc_auc_prob_a_better": 0.1335,
+      "causal_roc_auc_prob_a_worse": 0.8665,
       "causal_roc_auc_significant": false
     },
     {
@@ -155,6 +164,7 @@
       "causal_roc_auc_diff_ci_low": -0.05506894439458847,
       "causal_roc_auc_diff_ci_high": -0.03663005828857422,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -164,6 +174,7 @@
       "causal_roc_auc_diff_ci_low": -0.048845109343528745,
       "causal_roc_auc_diff_ci_high": -0.02892249971628191,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -173,6 +184,7 @@
       "causal_roc_auc_diff_ci_low": -0.06937538385391236,
       "causal_roc_auc_diff_ci_high": -0.04459946900606157,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     },
     {
@@ -182,6 +194,7 @@
       "causal_roc_auc_diff_ci_low": -0.001562395691871643,
       "causal_roc_auc_diff_ci_high": 0.01627117246389387,
       "causal_roc_auc_prob_a_better": 0.931,
+      "causal_roc_auc_prob_a_worse": 0.069,
       "causal_roc_auc_significant": false
     },
     {
@@ -191,6 +204,7 @@
       "causal_roc_auc_diff_ci_low": -0.020599393546581267,
       "causal_roc_auc_diff_ci_high": -0.00142519026994707,
       "causal_roc_auc_prob_a_better": 0.011,
+      "causal_roc_auc_prob_a_worse": 0.989,
       "causal_roc_auc_significant": true
     },
     {
@@ -200,6 +214,7 @@
       "causal_roc_auc_diff_ci_low": -0.027163875102996827,
       "causal_roc_auc_diff_ci_high": -0.008823862671852114,
       "causal_roc_auc_prob_a_better": 0.0,
+      "causal_roc_auc_prob_a_worse": 1.0,
       "causal_roc_auc_significant": true
     }
   ]

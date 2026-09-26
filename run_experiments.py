@@ -179,6 +179,11 @@ def main_eval_steps():
     return steps
 
 
+def holm(pairwise_csv, family):
+    return [PY, "-m", "analysis.holm_correction", pairwise_csv,
+            "--bootstrap_samples", "2000", "--family", family]
+
+
 def arm(name, head, checkpoint):
     return ["--arm", "{0}:{1}:{2}:{3}".format(name, VAL_CACHE, head, checkpoint)]
 
@@ -221,9 +226,11 @@ def ablation_eval_steps():
     comparisons["lr"] = arms
 
     steps = [compare(name, arms) for name, arms in comparisons.items()]
-    steps.append([PY, "-m", "analysis.holm_correction",
-                  *[os.path.join(ABL_OUT, name + "_pairwise.csv") for name in comparisons],
-                  "--bootstrap_samples", "2000"])
+    # Only the comparisons each ablation is about: across heads under one seed or
+    # one loss, within a head across zeta or lr values.
+    families = {"seeds": "suffix", "loss_pqm_vs_bce": "suffix", "zeta": "prefix", "lr": "prefix"}
+    for name in comparisons:
+        steps.append(holm(os.path.join(ABL_OUT, name + "_pairwise.csv"), families[name]))
     steps.append(bon(os.path.join(ABL_CKPT, "bce"), BCE_HEADS, os.path.join(ABL_OUT, "bon_bce")))
     return steps
 
@@ -234,9 +241,7 @@ def long_eval_steps():
         tag = "{0}_e{1}".format(head, LONG_EPOCHS)
         arms += arm(head + "_e30", head, final(head))
         arms += arm(tag, head, ablation("long", tag))
-    return [compare("long", arms),
-            [PY, "-m", "analysis.holm_correction", os.path.join(ABL_OUT, "long_pairwise.csv"),
-             "--bootstrap_samples", "2000"]]
+    return [compare("long", arms), holm(os.path.join(ABL_OUT, "long_pairwise.csv"), "prefix")]
 
 
 def lora_steps():
@@ -265,8 +270,7 @@ def lora_eval_steps():
     bon_lora = bon(LORA_CKPT, ["linear"], os.path.join(ABL_OUT, "bon_lora"))
     bon_lora[bon_lora.index("--cache_dir") + 1] = BON_LORA_CACHE
     return [compare("lora_vs_frozen", arms),
-            [PY, "-m", "analysis.holm_correction",
-             os.path.join(ABL_OUT, "lora_vs_frozen_pairwise.csv"), "--bootstrap_samples", "2000"],
+            holm(os.path.join(ABL_OUT, "lora_vs_frozen_pairwise.csv"), "all"),
             bon_lora]
 
 

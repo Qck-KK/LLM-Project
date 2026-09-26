@@ -1,0 +1,7 @@
+arm_a,arm_b,roc_auc_diff,roc_auc_diff_ci_low,roc_auc_diff_ci_high,roc_auc_prob_a_better,roc_auc_prob_a_worse,roc_auc_significant,average_precision_diff,average_precision_diff_ci_low,average_precision_diff_ci_high,average_precision_prob_a_better,average_precision_prob_a_worse,average_precision_significant
+mlp_e30,mlp_e60,0.0,0.0,0.0,0.0,0.0,False,0.0,0.0,0.0,0.0,0.0,False
+mlp_e30,attention_pe_e30,-0.02773118019104004,-0.03713369220495224,-0.017490050196647646,0.0,1.0,True,-0.02609485387802124,-0.03859598785638809,-0.012920562922954563,0.0,1.0,True
+mlp_e30,attention_pe_e60,-0.02773118019104004,-0.03713369220495224,-0.017490050196647646,0.0,1.0,True,-0.02609485387802124,-0.03859598785638809,-0.012920562922954563,0.0,1.0,True
+mlp_e60,attention_pe_e30,-0.02773118019104004,-0.03713369220495224,-0.017490050196647646,0.0,1.0,True,-0.02609485387802124,-0.03859598785638809,-0.012920562922954563,0.0,1.0,True
+mlp_e60,attention_pe_e60,-0.02773118019104004,-0.03713369220495224,-0.017490050196647646,0.0,1.0,True,-0.02609485387802124,-0.03859598785638809,-0.012920562922954563,0.0,1.0,True
+attention_pe_e30,attention_pe_e60,0.0,0.0,0.0,0.0,0.0,False,0.0,0.0,0.0,0.0,0.0,False

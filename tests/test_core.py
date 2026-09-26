@@ -10,7 +10,7 @@ from analysis.analyze_offline_pruning import (
     classify_trajectory,
     stopping_index,
 )
-from analysis.holm_correction import bootstrap_p_value, holm_adjust
+from analysis.holm_correction import bootstrap_p_value, correct_pairwise_rows, holm_adjust
 from eval.eval_utils import (
     average_precision,
     best_threshold_accuracy,
@@ -84,6 +84,24 @@ class MultipleComparisonTests(unittest.TestCase):
         adjusted = holm_adjust([0.02, float("nan")])
         self.assertAlmostEqual(adjusted[0], 0.02)
         self.assertTrue(adjusted[1] != adjusted[1])
+
+    def test_identical_arms_are_not_significant(self):
+        """A difference of exactly zero in every resample must give p = 1."""
+        self.assertEqual(bootstrap_p_value(0.0, 2000, prob_a_worse=0.0), 1.0)
+        self.assertAlmostEqual(bootstrap_p_value(0.0, 2000, prob_a_worse=1.0), 2 / 2001)
+
+    def test_family_restricts_the_correction(self):
+        def row(a, b):
+            return {"arm_a": a, "arm_b": b, "roc_auc_prob_a_better": "0.0",
+                    "roc_auc_prob_a_worse": "1.0", "roc_auc_significant": "True"}
+        rows = [row("gru_lr1e-4", "gru_lr3e-5"), row("gru_lr1e-4", "cnn_lr1e-4"),
+                row("cnn_lr1e-4", "cnn_lr3e-5")]
+        out, _, n = correct_pairwise_rows(rows, 2000, family="prefix")
+        self.assertEqual(n, 2)
+        self.assertEqual(out[1]["roc_auc_significant_holm"], "")
+        self.assertAlmostEqual(out[0]["roc_auc_p_holm"], 2 * 2 / 2001)
+        _, _, n_suffix = correct_pairwise_rows(rows, 2000, family="suffix")
+        self.assertEqual(n_suffix, 1)
 
     def test_bootstrap_p_value_is_floored_and_two_sided(self):
         self.assertAlmostEqual(bootstrap_p_value(0.0, 2000), 2 / 2001)

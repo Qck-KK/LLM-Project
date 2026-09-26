@@ -134,6 +134,9 @@ def main():
                 "causal_roc_auc_prob_a_better": (
                     sum(1 for d in finite if d > 0) / len(finite) if finite else float("nan")
                 ),
+                "causal_roc_auc_prob_a_worse": (
+                    sum(1 for d in finite if d < 0) / len(finite) if finite else float("nan")
+                ),
                 "causal_roc_auc_significant": bool(low > 0 or high < 0),
             })
     summary["pairwise"] = pairs

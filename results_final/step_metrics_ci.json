@@ -64,11 +64,13 @@
       "roc_auc_diff_ci_low": -0.07903893291950226,
       "roc_auc_diff_ci_high": -0.062022538483142854,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.07598096132278442,
       "average_precision_diff_ci_low": -0.08879363089799881,
       "average_precision_diff_ci_high": -0.06307666748762131,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -78,11 +80,13 @@
       "roc_auc_diff_ci_low": -0.09195363372564316,
       "roc_auc_diff_ci_high": -0.07108415067195893,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.08983486890792847,
       "average_precision_diff_ci_low": -0.1039379045367241,
       "average_precision_diff_ci_high": -0.07647615373134614,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -92,11 +96,13 @@
       "roc_auc_diff_ci_low": -0.09694475382566452,
       "roc_auc_diff_ci_high": -0.07385437786579133,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.09492617845535278,
       "average_precision_diff_ci_low": -0.11086925566196441,
       "average_precision_diff_ci_high": -0.07925535142421723,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -106,11 +112,13 @@
       "roc_auc_diff_ci_low": -0.1152303621172905,
       "roc_auc_diff_ci_high": -0.08895436823368072,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.11395269632339478,
       "average_precision_diff_ci_low": -0.13082871288061143,
       "average_precision_diff_ci_high": -0.09692693203687668,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -120,11 +128,13 @@
       "roc_auc_diff_ci_low": -0.11130420714616776,
       "roc_auc_diff_ci_high": -0.08473142087459565,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.10207581520080566,
       "average_precision_diff_ci_low": -0.12041573524475098,
       "average_precision_diff_ci_high": -0.08431021869182587,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -134,11 +144,13 @@
       "roc_auc_diff_ci_low": -0.01706380248069763,
       "roc_auc_diff_ci_high": -0.005113893747329713,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.013853907585144043,
       "average_precision_diff_ci_low": -0.02193623036146164,
       "average_precision_diff_ci_high": -0.004564261436462403,
       "average_precision_prob_a_better": 0.0015,
+      "average_precision_prob_a_worse": 0.9985,
       "average_precision_significant": true
     },
     {
@@ -148,11 +160,13 @@
       "roc_auc_diff_ci_low": -0.023495429754257204,
       "roc_auc_diff_ci_high": -0.0070230394601821945,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.01894521713256836,
       "average_precision_diff_ci_low": -0.029995962977409363,
       "average_precision_diff_ci_high": -0.007833279669284827,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -162,11 +176,13 @@
       "roc_auc_diff_ci_low": -0.0414446160197258,
       "roc_auc_diff_ci_high": -0.022333307564258578,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.03797173500061035,
       "average_precision_diff_ci_low": -0.049998138844966886,
       "average_precision_diff_ci_high": -0.026097366213798524,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -176,11 +192,13 @@
       "roc_auc_diff_ci_low": -0.03713369220495224,
       "roc_auc_diff_ci_high": -0.017490050196647646,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.02609485387802124,
       "average_precision_diff_ci_low": -0.03859598785638809,
       "average_precision_diff_ci_high": -0.012920562922954563,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -190,11 +208,13 @@
       "roc_auc_diff_ci_low": -0.011869029700756073,
       "roc_auc_diff_ci_high": 0.0031185567378997753,
       "roc_auc_prob_a_better": 0.142,
+      "roc_auc_prob_a_worse": 0.858,
       "roc_auc_significant": false,
       "average_precision_diff": -0.005091309547424316,
       "average_precision_diff_ci_low": -0.014613911509513855,
       "average_precision_diff_ci_high": 0.004367722570896138,
       "average_precision_prob_a_better": 0.1585,
+      "average_precision_prob_a_worse": 0.8415,
       "average_precision_significant": false
     },
     {
@@ -204,11 +224,13 @@
       "roc_auc_diff_ci_low": -0.029915818572044374,
       "roc_auc_diff_ci_high": -0.0116447851061821,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.02411782741546631,
       "average_precision_diff_ci_low": -0.03496296852827072,
       "average_precision_diff_ci_high": -0.013199302554130559,
       "average_precision_prob_a_better": 0.0,
+      "average_precision_prob_a_worse": 1.0,
       "average_precision_significant": true
     },
     {
@@ -218,11 +240,13 @@
       "roc_auc_diff_ci_low": -0.02682023197412491,
       "roc_auc_diff_ci_high": -0.00605050474405289,
       "roc_auc_prob_a_better": 0.0015,
+      "roc_auc_prob_a_worse": 0.9985,
       "roc_auc_significant": true,
       "average_precision_diff": -0.012240946292877197,
       "average_precision_diff_ci_low": -0.024778912961483,
       "average_precision_diff_ci_high": -0.00016121715307238426,
       "average_precision_prob_a_better": 0.025,
+      "average_precision_prob_a_worse": 0.975,
       "average_precision_significant": true
     },
     {
@@ -232,11 +256,13 @@
       "roc_auc_diff_ci_low": -0.025228697061538696,
       "roc_auc_diff_ci_high": -0.00783485770225527,
       "roc_auc_prob_a_better": 0.0,
+      "roc_auc_prob_a_worse": 1.0,
       "roc_auc_significant": true,
       "average_precision_diff": -0.019026517868041992,
       "average_precision_diff_ci_low": -0.03078926056623459,
       "average_precision_diff_ci_high": -0.00834881365299225,
       "average_precision_prob_a_better": 0.0005,
+      "average_precision_prob_a_worse": 0.9995,
       "average_precision_significant": true
     },
     {
@@ -246,11 +272,13 @@
       "roc_auc_diff_ci_low": -0.02212635725736618,
       "roc_auc_diff_ci_high": -0.0028444036841392666,
       "roc_auc_prob_a_better": 0.0055,
+      "roc_auc_prob_a_worse": 0.9945,
       "roc_auc_significant": true,
       "average_precision_diff": -0.007149636745452881,
       "average_precision_diff_ci_low": -0.01906660944223404,
       "average_precision_diff_ci_high": 0.004985648393630979,
       "average_precision_prob_a_better": 0.1105,
+      "average_precision_prob_a_worse": 0.8895,
       "average_precision_significant": false
     },
     {
@@ -260,11 +288,13 @@
       "roc_auc_diff_ci_low": -0.004465141892433166,
       "roc_auc_diff_ci_high": 0.012630479037761676,
       "roc_auc_prob_a_better": 0.8325,
+      "roc_auc_prob_a_worse": 0.167,
       "roc_auc_significant": false,
       "average_precision_diff": 0.011876881122589111,
       "average_precision_diff_ci_low": 0.002158056199550629,
       "average_precision_diff_ci_high": 0.022618168592453,
       "average_precision_prob_a_better": 0.9895,
+      "average_precision_prob_a_worse": 0.0105,
       "average_precision_significant": true
     }
   ]
