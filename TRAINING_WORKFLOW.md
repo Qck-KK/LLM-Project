@@ -10,7 +10,7 @@
 
 | 项 | 旧版 | 现行 |
 |---|---|---|
-| 学习率 | `1e-3` | `1e-4`（网格内对 6 个头中的 5 个最优） |
+| 学习率 | `1e-3` | `1e-4`（修复前的网格内对 6 个头中的 5 个最优；修复后 `3e-5` 对 5 个头 development loss 更低，主结果仍用预先确定的 `1e-4`，并在 `3e-5` 下重做了全部评估，见 14G） |
 | epoch 上限 | 10 | 30 |
 | early stopping patience | 2 | 5 |
 | 主指标 | step-level 指标 | step-level 指标 + **Best-of-N** |
@@ -782,7 +782,7 @@ python -m eval.eval_single_from_step_cache   --cache_dir cache/val_fixed --sourc
 冻结编码器是**本项目自己引入的简化**，不是 PQM 的做法（后者在 8 卡上全量微调 7B）。
 这一步检验该前提的代价。
 
-> 历史记录：下面的 LoRA 实验在修复前的数据上运行（`train_lora.py` 同样经由 `dataset.py` 读取标签，`cache/val_lora` 也用旧解析器生成），其结论需要在修复后的数据上重跑才能成立。
+> 历史记录：下面的命令是修复前运行的版本（`train_lora.py` 同样经由 `dataset.py` 读取标签，`cache/val_lora` 也用旧解析器生成）。修复后的 LoRA 对照由 `run_experiments.py --only lora lora_eval` 运行（见 14G），结论与修复前相反：LoRA 显著优于同一 linear 头的冻结版本，并且是唯一在 BoN 上显著超过多数投票的配置。
 
 ```bash
 python train_lora.py   --train_file data/train.jsonl --epochs 1 --batch_size 4 --max_length 512   --lr 1e-4 --zeta 4.0 --seed 42   --save_dir checkpoints/lora_full --results_dir results_lora_full
