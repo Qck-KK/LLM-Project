@@ -1,11 +1,4 @@
-"""Causal-prefix diagnostics and offline heuristic-pruning simulation.
-
-The cached Qwen step representations are causal, but contextual reward heads
-can read later step embeddings when they score a complete trajectory.  This
-module therefore reruns each lightweight head on every available prefix and
-uses only the final score of that prefix for pruning decisions.  It never runs
-the frozen encoder and never generates new text.
-"""
+"""Causal-prefix diagnostics and offline heuristic-pruning simulation."""
 
 import argparse
 import csv
@@ -63,11 +56,6 @@ def score_cache_causally(head, shard_paths, device):
         step_hidden = shard["step_hidden"].to(device).float()
         step_mask = shard["step_mask"].to(device).bool()
         labels = shard["labels"].to(device).long()
-        # Trajectories longer than the encoder's max_length lost their trailing
-        # step markers, so the cache can carry labels for steps that have no
-        # embedding. Scoring those positions feeds a zero vector to the head and
-        # yields a constant, which silently corrupts every metric. A step without
-        # an embedding is padding, so mark it as such.
         labels = labels.masked_fill(~step_mask, -100)
         causal_list.append(causal_prefix_scores(head, step_hidden, step_mask).cpu())
         full_list.append(head(step_hidden, step_mask).cpu())

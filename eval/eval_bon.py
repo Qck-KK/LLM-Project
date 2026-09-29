@@ -1,38 +1,4 @@
-"""Best-of-N reranking evaluation on Qwen's own GSM8K candidates.
-
-This is the canonical way a process reward model gets used: sample N candidate
-solutions, score each one, keep the highest. The workflow originally excluded
-Best-of-N for compute reasons, but the expensive half is already paid -- the
-21,104 candidates are encoded in `cache/single_eval` -- so scoring them with a
-lightweight head costs seconds.
-
-Two reference points frame every head:
-
-* `majority_vote` (self-consistency): pick the most common final answer among the
-  k candidates, no reward model involved. This is the baseline a PRM has to beat
-  to be worth deploying; raw accuracy alone says nothing.
-* `oracle` : correct if ANY of the k candidates is correct. The ceiling that
-  reranking could reach with a perfect scorer.
-
-Each head is used in two ways (column `method`):
-
-* `argmax`: keep the single highest-scoring candidate (plain Best-of-N).
-* `weighted_vote`: PRM-weighted self-consistency -- every candidate votes for
-  its final answer with weight sigmoid(score), and the answer with the largest
-  total wins. This is the usual way a PRM is combined with majority voting, so
-  it is the fairer test of whether the reward adds anything on top of it.
-
-Every row also carries its paired difference to `majority_vote`, bootstrapped
-over the same question resamples, a two-sided bootstrap p-value for it, and a
-Holm-adjusted p-value. The Holm family is every head/aggregation/method row at
-the same k: picking the best of many selectors after the fact is exactly the
-multiple comparison this guards against.
-
-For k < N each question is evaluated over several random subsets of its 16
-candidates, so the curve does not depend on the arbitrary generation order.
-Confidence intervals resample questions, which are the independent unit here --
-the 16 candidates of one question are anything but independent.
-"""
+"""Best-of-N reranking evaluation on Qwen's own GSM8K candidates."""
 
 import argparse
 import collections
@@ -96,12 +62,7 @@ def majority_choice(preds, subset):
 
 
 def weighted_vote_choice(preds, weights, subset):
-    """Index within `subset` of a candidate carrying the heaviest answer.
-
-    Each non-empty answer collects the weights of the candidates that gave it;
-    ties go to the answer seen first. With no parseable answer at all, fall back
-    to the single heaviest candidate.
-    """
+    """Index within `subset` of a candidate carrying the heaviest answer."""
     totals = {}
     for i in subset:
         if preds[i] not in ("", None):

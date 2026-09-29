@@ -1,20 +1,4 @@
-"""Paired comparison of reward-head arms that may live in different caches.
-
-Written for the LoRA arm against the frozen arms, and reused for the ablations
-that differ only in how a head was trained (loss, zeta, learning rate, seed):
-each arm is NAME:CACHE:HEAD:CKPT, and `--out_name` keeps the outputs apart.
-
-The two arms live in different caches -- the LoRA encoder produces different step
-features -- so `analysis.bootstrap_step_metrics` cannot pair them in one pass.
-They do, however, score the SAME trajectories under the SAME split, so the
-resampling can be shared: draw a set of held-out trajectories once and evaluate
-every arm on that same draw. That gives a genuine paired interval for
-"does unfreezing the encoder help?".
-
-Bias to keep in mind when reading the result: the frozen arms trained for 30
-epochs on the full data, the LoRA arm for 1. The handicap favours the frozen
-arms, so a LoRA win is conservative and a LoRA loss is ambiguous.
-"""
+"""Paired comparison of reward-head arms that may live in different caches."""
 
 import argparse
 import csv

@@ -1,38 +1,4 @@
-"""Holm-Bonferroni correction for the paired bootstrap comparisons.
-
-`bootstrap_step_metrics`, `bootstrap_causal_metrics` and `compare_lora_frozen`
-call a pair significantly different when its 95% percentile interval excludes
-zero. With many pairs per metric, at least one false positive is expected under
-the null far more often than 5% of the time. This module turns each comparison
-into a two-sided bootstrap p-value and applies Holm's step-down correction,
-which controls the family-wise error rate at the chosen alpha without assuming
-the comparisons are independent.
-
-It reads the `*_pairwise.csv` files those scripts already wrote and needs no
-model, cache or GPU. The original CSV is left untouched; the corrected table is
-written next to it with a `_holm` suffix.
-
-The p-value comes from how often head A beat and lost to head B:
-
-    p = min(1, 2 * min(k_ge + 1, k_le + 1) / (B + 1))
-
-where k_ge counts resamples with difference >= 0 and k_le those with <= 0. A
-difference that is exactly zero in every resample (two identical sets of
-scores) therefore gets p = 1, not a spuriously small value. The +1 terms keep p
-above zero when every resample agrees, so with B = 2000 the smallest reportable
-p-value is about 0.001 -- which also means a family of more than ~50
-comparisons can never reach significance. Choose the family accordingly.
-
-Families (`--family`), keyed on the arm / head names of each pair:
-
-* all     every pair in the file (six heads -> 15 comparisons);
-* prefix  only pairs whose names agree up to the last "_" (e.g. the same head
-          at different learning rates: gru_lr1e-4 vs gru_lr3e-5);
-* suffix  only pairs whose names agree after the last "_" (e.g. different heads
-          under the same seed: attention_s43 vs cnn_s43, or pqm_mlp vs bce_mlp).
-
-Pairs outside the family keep their uncorrected p-value and get no Holm verdict.
-"""
+"""Holm-Bonferroni correction for the paired bootstrap comparisons."""
 
 import argparse
 import csv
@@ -44,10 +10,7 @@ FAMILIES = ("all", "prefix", "suffix")
 
 
 def bootstrap_p_value(prob_a_better, n_samples, prob_a_worse=None):
-    """Two-sided p-value from the shares of resamples in which A beat / lost to B.
-
-    Without `prob_a_worse` (older CSVs) ties are assumed not to occur.
-    """
+    """Two-sided p-value from the shares of resamples in which A beat / lost to B."""
     if prob_a_better != prob_a_better:  # NaN: no finite resample
         return float("nan")
     wins = round(prob_a_better * n_samples)
@@ -59,10 +22,7 @@ def bootstrap_p_value(prob_a_better, n_samples, prob_a_worse=None):
 
 
 def holm_adjust(p_values):
-    """Holm step-down adjusted p-values, returned in the input order.
-
-    NaN p-values are left as NaN and do not count towards the family size.
-    """
+    """Holm step-down adjusted p-values, returned in the input order."""
     indexed = [(p, i) for i, p in enumerate(p_values) if p == p]
     indexed.sort()
     m = len(indexed)

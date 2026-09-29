@@ -1,17 +1,4 @@
-"""In-distribution single-solution evaluation derived from a step-level cache.
-
-The optional single-solution experiment scores Qwen's own free-form GSM8K
-generations, which differ from Math-Shepherd in step granularity and formatting.
-A weak result there could mean either that the heads cannot judge a whole
-solution, or merely that they do not transfer to another generator's output.
-
-This module supplies the missing control: it reuses the *validation* step cache,
-labels each trajectory correct only when every one of its steps is correct, and
-aggregates the same per-step Q-values into a trajectory score. Same heads, same
-split, same aggregation -- only the distribution changes.
-
-It never runs the frozen encoder and never retrains.
-"""
+"""In-distribution single-solution evaluation derived from a step-level cache."""
 
 import argparse
 import csv
@@ -102,9 +89,6 @@ def main():
     final_correct = (n_steps > 0) & (n_correct == n_steps)
     usable = n_steps > 0
     if args.source_file:
-        # The cache only holds labels for steps that survived max_length
-        # truncation, so an error confined to the truncated tail would make the
-        # solution look correct. Take the target from the full label list.
         records = MathShepherdStepDataset._load_raw(args.source_file)
         if len(records) != labels.shape[0]:
             raise RuntimeError("source_file has {0} records, cache {1}".format(

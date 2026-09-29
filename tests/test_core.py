@@ -131,12 +131,7 @@ class BestOfNTests(unittest.TestCase):
 
 class ArchitectureTests(unittest.TestCase):
     def test_plain_attention_is_permutation_equivariant(self):
-        """Self-attention without positions cannot tell step order apart.
-
-        Documents why `attention` scores exactly 0.0000 ROC-AUC change under the
-        reverse and swap perturbations: permuting the steps merely permutes the
-        outputs, so the (score, label) pairs are unchanged.
-        """
+        """Self-attention without positions cannot tell step order apart."""
         torch.manual_seed(0)
         head = AttentionPoolingHead(hidden_size=32, n_heads=4).eval()
         step_hidden = torch.randn(1, 5, 32)
@@ -166,12 +161,7 @@ class ArchitectureTests(unittest.TestCase):
 
 class StabilityTests(unittest.TestCase):
     def test_attention_head_survives_all_padded_trajectory(self):
-        """A zero-step trajectory must not turn the whole batch into NaN.
-
-        ~0.1% of cached trajectories have no usable steps. Feeding an all-True
-        key_padding_mask to MultiheadAttention makes softmax return NaN, which
-        the loss mask hides but backward still propagates into every weight.
-        """
+        """A zero-step trajectory must not turn the whole batch into NaN."""
         torch.manual_seed(0)
         head = AttentionPoolingHead(hidden_size=32, n_heads=4)
         step_hidden = torch.randn(2, 4, 32)
@@ -235,11 +225,7 @@ class StabilityTests(unittest.TestCase):
 
 class OfflinePruningTests(unittest.TestCase):
     def test_pointwise_head_causal_scores_equal_full_scores(self):
-        """A pointwise head cannot see the future, so prefix scoring is a no-op.
-
-        Any discrepancy here means the causal/full comparison is measuring a
-        masking artefact rather than the contextual heads' use of later steps.
-        """
+        """A pointwise head cannot see the future, so prefix scoring is a no-op."""
         torch.manual_seed(0)
         head = LinearHead(hidden_size=16)
         step_hidden = torch.randn(3, 5, 16)

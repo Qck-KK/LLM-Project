@@ -1,43 +1,5 @@
 """Runs every cache-based experiment on the corrected Math-Shepherd caches.
 
-The caches `cache/train_fixed` and `cache/val_fixed` were rebuilt after the
-parser fix in dataset.py (multi-line steps had been split into fake error
-steps). Everything trained or evaluated on the older `_clean` caches predates
-that fix; this driver regenerates the results from scratch.
-
-Groups, in the order they run (Qwen never runs; the caches must exist):
-
-* main       -- the six heads under the final protocol (lr=1e-4, 30 epochs,
-                patience 5, zeta 4, seed 42) -> checkpoints/final/
-* main_eval  -- the full evaluation chain for those heads -> results_final/:
-                data-bias audit and baselines, held-out step metrics,
-                behaviour / first-error / perturbation analysis, causal-prefix
-                pruning, trajectory-level bootstrap CIs with Holm correction,
-                Best-of-N (argmax and PRM-weighted voting), out-of-distribution
-                and in-distribution single-solution evaluation, summary table.
-* bce        -- PQM ranking loss vs pointwise step BCE (linear / mlp / attention).
-* zeta       -- PQM margin 2 and 8 against the default 4 (linear / attention).
-* seeds      -- seeds 43 and 44 for attention / cnn / mlp.
-* lr         -- 3e-5 and 3e-4 for all six heads, around the chosen 1e-4.
-* long       -- mlp and attention_pe again with a 60-epoch cap: on the corrected
-                data both picked epoch 30, the cap, so they had not converged.
-* long_eval  -- paired comparison of the 60-epoch runs against the 30-epoch ones.
-* main_eval_lr3e-5 -- the same evaluation chain for the six heads trained at
-                lr=3e-5 (from the lr group). On the corrected data 3e-5 reaches a
-                lower development loss than the protocol's 1e-4 for five heads,
-                so the conclusions are re-checked there -> results_final_lr3e-5/
-* lora       -- the frozen-encoder control: LoRA (r=16 on q/k/v/o) plus a linear
-                value head, one pass over the corrected training set, then the
-                validation and GSM8K caches re-encoded with the adapted encoder.
-                Needs transformers and peft (--encoder_python). About 10 hours.
-* lora_eval  -- LoRA vs the frozen linear and attention heads (paired), and
-                Best-of-N for the LoRA head.
-* ablation_eval -- paired bootstrap comparisons of every ablation against the
-                final heads, Holm correction, Best-of-N for the BCE heads.
-
-Training steps are skipped when their checkpoint and efficiency file already
-exist, so an interrupted run resumes where it stopped. Evaluation always reruns.
-
     python run_experiments.py                          # everything
     python run_experiments.py --only main main_eval    # a subset
     python run_experiments.py --dry_run                # print the commands

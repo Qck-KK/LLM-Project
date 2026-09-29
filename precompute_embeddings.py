@@ -42,8 +42,6 @@ def main():
     model_dtype = torch.float16 if args.dtype == "float16" and device != "cpu" else torch.float32
     encoder = FrozenStepEncoder(model_name=args.model_name, dtype=model_dtype)
     if args.lora_path:
-        # The eval caches must come from the same encoder the head was trained
-        # with, otherwise the LoRA arm is scored on features it never saw.
         from peft import PeftModel
         encoder.model = PeftModel.from_pretrained(encoder.model, args.lora_path)
         encoder.model = encoder.model.merge_and_unload()

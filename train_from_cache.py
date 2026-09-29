@@ -2,16 +2,10 @@
 train_from_cache.py
 =====================
 Trains a reward head using embeddings that were precomputed on another machine.
-No LLM forward pass happens here at all -- this only touches the tiny head,
-so it should be dramatically faster than training through the encoder.
 
 Usage:
     python train_from_cache.py --cache_dir cache/math_shepherd_qwen05b \
         --head mlp --epochs 30 --lr 1e-4 --early_stopping_patience 5 --save_path checkpoints/mlp_head.pt
-
-Repeat with --head cnn / gru / attention / linear to sweep all architectures
-against the SAME cached embeddings -- this is the controlled comparison the
-proposal calls for (identical encoder output, only the head differs).
 """
 
 import argparse

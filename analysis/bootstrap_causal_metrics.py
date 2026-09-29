@@ -1,16 +1,4 @@
-"""Bootstrap confidence intervals for causal-prefix step metrics.
-
-`analysis.bootstrap_step_metrics` covers the full-trajectory scores, but the
-deployment-relevant question is which head ranks best when future steps are
-hidden -- and there the gaps are small (attention leads mlp by ~0.005). A point
-estimate cannot settle that.
-
-This module reuses the `{head}_causal_predictions.pt` files that
-`analysis.analyze_offline_pruning` already saved, so it runs no forward pass at
-all. It resamples held-out trajectories and scores every head on the SAME
-resample, giving paired intervals for both the causal AUC and the causal-minus-
-full penalty.
-"""
+"""Bootstrap confidence intervals for causal-prefix step metrics."""
 
 import argparse
 import csv
@@ -64,7 +52,6 @@ def main():
     _, test_mask = deterministic_example_split(
         labels.shape[0], calibration_fraction, split_seed
     )
-    # A label without an embedding has no score to speak of.
     valid = ((labels == 0) | (labels == 1)) & step_mask & test_mask[:, None]
 
     n_traj, max_steps = valid.shape

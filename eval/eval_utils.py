@@ -30,11 +30,6 @@ def load_step_cache_labels(cache_dir: str):
         shard = torch.load(path, map_location="cpu")
         labels = shard["labels"].long()
         step_mask = shard.get("step_mask", labels != -100).bool()
-        # Trajectories longer than the encoder's max_length lost their trailing
-        # step markers, so the cache can carry labels for steps that have no
-        # embedding. Scoring those positions feeds a zero vector to the head and
-        # yields a constant, which silently corrupts every metric. A step without
-        # an embedding is padding, so mark it as such.
         labels = labels.masked_fill(~step_mask, -100)
         labels_list.append(labels)
         mask_list.append(step_mask)
@@ -52,11 +47,7 @@ def load_step_cache_labels(cache_dir: str):
 
 
 def deterministic_example_split(n_examples: int, calibration_fraction: float = 0.5, seed: int = 42):
-    """Return reproducible calibration/test example masks.
-
-    The seed fixes the split; this is not a multi-seed experiment. Splitting by
-    trajectory prevents steps from the same solution leaking into both sets.
-    """
+    """Return reproducible calibration/test example masks."""
     if n_examples < 2:
         raise ValueError("At least two examples are required for a calibration/test split.")
     if not 0.0 < calibration_fraction < 1.0:

@@ -125,12 +125,6 @@ class AttentionPoolingHead(nn.Module):
     def forward(self, step_hidden, step_mask):
         # key_padding_mask expects True = IGNORE this position
         key_padding_mask = ~step_mask
-        # A trajectory with no real steps leaves an all-True row here, so the
-        # softmax normalises over an entirely -inf row and returns NaN. The loss
-        # masks that row out, but the NaN still flows back through softmax and
-        # poisons every weight. Let such rows attend to position 0 instead; their
-        # outputs are ignored downstream either way. Rows with >=1 real step are
-        # untouched.
         empty_rows = key_padding_mask.all(dim=1)
         if empty_rows.any():
             key_padding_mask = key_padding_mask.clone()
@@ -147,18 +141,7 @@ class AttentionPoolingHead(nn.Module):
 # Attention + sinusoidal positions: the same head, told where each step sits
 # ---------------------------------------------------------------------------
 class AttentionPoolingPositionHead(AttentionPoolingHead):
-    """AttentionPoolingHead with sinusoidal positional encoding on the steps.
-
-    Plain self-attention carries no notion of order: permuting the steps permutes
-    the outputs and nothing else. The perturbation experiment confirms this --
-    reversing or swapping steps moves `attention` ROC-AUC by exactly 0.0000,
-    while `cnn` and `gru` lose 0.05-0.13. So the 6.4M-parameter head is really a
-    pointwise scorer plus content-based pooling, and cannot use step order at all.
-
-    Adding a sinusoidal encoding makes order visible. It is parameter-free on
-    purpose: the A/B against the plain head then isolates the inductive bias
-    rather than confounding it with extra capacity.
-    """
+    """AttentionPoolingHead with sinusoidal positional encoding on the steps."""
 
     def _positional_encoding(self, n_steps, hidden_size, device, dtype):
         position = torch.arange(n_steps, device=device, dtype=torch.float32).unsqueeze(1)
@@ -174,8 +157,6 @@ class AttentionPoolingPositionHead(AttentionPoolingHead):
         encoding = self._positional_encoding(
             n_steps, hidden_size, step_hidden.device, step_hidden.dtype
         )
-        # Padded positions are masked out of the attention and the loss anyway,
-        # but zeroing them keeps the padded rows numerically identical to before.
         step_hidden = step_hidden + encoding.unsqueeze(0) * step_mask.unsqueeze(-1)
         return super().forward(step_hidden, step_mask)
 

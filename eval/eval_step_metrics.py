@@ -13,9 +13,6 @@ threshold and the other half is used for the reported metrics.
 Usage:
     python -m eval.eval_step_metrics --cache_dir cache/qwen05b_val \
         --head mlp --checkpoint checkpoints/mlp_head.pt
-
-Run once per trained head, then compare the printed numbers across heads --
-this reproduces the "Verification Performance" columns of the table.
 """
 
 import argparse
@@ -44,8 +41,6 @@ def qvalue_ranking_accuracy(all_q, all_labels):
     """
     Pairwise ranking accuracy WITHIN each trajectory: for every (correct step,
     incorrect step) pair in the same example, check if Q(correct) > Q(incorrect).
-    This is the metric PQM's training objective directly optimizes for, so it's
-    the most informative single number for comparing architectures.
     """
     total, correct_pairs = 0, 0
     B, S = all_labels.shape
@@ -94,11 +89,6 @@ def main():
             step_hidden = shard["step_hidden"].to(device).float()
             step_mask = shard["step_mask"].to(device).bool()
             labels = shard["labels"].to(device).long()
-    # Trajectories longer than the encoder's max_length lost their trailing
-        # step markers, so the cache can carry labels for steps that have no
-        # embedding. Scoring those positions feeds a zero vector to the head and
-        # yields a constant, which silently corrupts every metric. A step without
-        # an embedding is padding, so mark it as such.
             labels = labels.masked_fill(~step_mask, -100)
             q = head(step_hidden, step_mask)
             all_q_list.append(q.cpu())

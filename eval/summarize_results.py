@@ -9,16 +9,9 @@ Scans a results directory for the JSON files produced by:
     - analyze_offline_pruning.py -> {head}_pruning_metrics.json
     - analyze_data_bias.py -> deterministic_baselines.json
 
-and merges them (by "head" name) into ONE comparison table -- this is the
-final deliverable table from the proposal (Section 5/6): one row per
-architecture, all metrics side by side.
-
 Usage:
     python -m eval.summarize_results --results_dir results/ \
         --out_csv results/summary.csv --out_md results/summary.md
-
-Run this any time after evaluating a new head -- it just re-scans the
-directory, so partial results (e.g. only 3 of 5 heads done so far) are fine.
 """
 
 import argparse

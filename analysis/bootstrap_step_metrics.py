@@ -1,14 +1,4 @@
-"""Trajectory-level bootstrap confidence intervals for held-out step metrics.
-
-Step-level ROC-AUC and Average Precision are this project's primary metrics, but
-a point estimate alone cannot say whether a 0.005 gap between two heads is real.
-This module resamples held-out *trajectories* -- never individual steps, which
-are correlated within a solution -- and scores every head on the SAME resample,
-so the paired difference between two heads gets a proper interval as well.
-
-It runs one light forward pass per head; it never retrains and never runs the
-frozen encoder.
-"""
+"""Trajectory-level bootstrap confidence intervals for held-out step metrics."""
 
 import argparse
 import csv

@@ -9,13 +9,6 @@ Expected raw record (Math-Shepherd's public format, one JSON object per line):
   "steps": ["Step 1 text", "Step 2 text", ...],
   "labels": [1, 1, 0, 1, ...]   # 1 = step is correct, 0 = incorrect
 }
-The raw Math-Shepherd release instead stores two strings per record: `input`,
-the solution with a "ки" marker after every step, and `label`, the same text
-with each marker replaced by "+" (correct) or "-" (incorrect). That form is
-converted by `parse_math_shepherd`.
-
-Adjust `_load_raw` if your local copy uses different field names -- the rest
-of the pipeline only depends on the (question, steps, labels) triple.
 """
 
 import json
@@ -27,17 +20,7 @@ STEP_MARKER = "ки"
 
 
 def parse_math_shepherd(input_text, label_text, marker=STEP_MARKER):
-    """Split a raw Math-Shepherd record into (question, steps, labels).
-
-    Steps are the spans between consecutive markers in `input_text`, so a step
-    whose text runs over several lines -- typically the final
-    "Step k: ...\\n\\n# Answer\\n\\n42" -- stays ONE step with ONE label. The
-    label is the "+"/"-" that `label_text` carries where the marker was.
-
-    Returns None unless `label_text` is exactly `input_text` with every marker
-    replaced by "+" or "-", so a record that does not follow the format is
-    rejected rather than silently mislabelled.
-    """
+    """Split a raw Math-Shepherd record into (question, steps, labels)."""
     segments = input_text.split(marker)
     if len(segments) < 2:
         return None
@@ -133,11 +116,6 @@ def collate_fn(batch, tokenizer, max_length=2048):
         max_length=max_length,
     )
 
-    # Truncation drops trailing step markers, so a long trajectory yields fewer
-    # step embeddings than it has labels. Keeping the full label row would
-    # supervise positions that have no embedding at all (the encoder emits one
-    # vector per surviving marker), so align each row to the markers that
-    # actually survived tokenization.
     step_token_id = tokenizer.convert_tokens_to_ids("ки")
     kept_counts = [int((row == step_token_id).sum()) for row in enc["input_ids"]]
 

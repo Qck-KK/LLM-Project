@@ -18,15 +18,6 @@ made on top of it, and neither changes the loss in the normal regime:
    step) is excluded from the batch mean. The official per-example average
    divides 0 by 0 there and turns the whole batch loss into NaN. A batch with no
    supervised position at all returns a zero loss that keeps the graph attached.
-
-Both behaviours are covered by tests/test_core.py.
-
-Intuition: for each correct step i, this loss wants Q(step_i) to be ranked
-above (a) all incorrect steps in the trajectory (with a margin `zeta`), and
-(b) all correct steps that come BEFORE it (Q-values should be non-decreasing
-along a correct trajectory). It's essentially a softmax/list-wise ranking
-loss computed efficiently via cumulative sums instead of explicit pairwise
-comparisons.
 """
 
 import torch
@@ -82,13 +73,7 @@ def pqm_loss(rewards: torch.Tensor, labels: torch.Tensor, zeta: float = 4.0) -> 
 
 
 def bce_step_loss(rewards: torch.Tensor, labels: torch.Tensor, zeta: float = 4.0) -> torch.Tensor:
-    """Pointwise step-classification baseline that PQM argues against.
-
-    Each labelled step is an independent binary target and the reward is its
-    logit (Math-Shepherd-style PRM training). Averaged over every labelled step
-    in the batch. `zeta` is accepted only so both losses share one signature;
-    it has no role here.
-    """
+    """Pointwise step-classification baseline that PQM argues against."""
     valid = (labels == 0) | (labels == 1)
     if not valid.any():
         return rewards.sum() * 0.0
