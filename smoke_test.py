@@ -1,18 +1,4 @@
-"""End-to-end smoke test: every stage of the pipeline on a few examples.
 
-    python smoke_test.py            # a few minutes on a GPU, longer on CPU
-    python smoke_test.py --no_lora  # skip the LoRA stage (needs peft)
-
-It uses only files in the repository -- data/dummy_train.jsonl (150
-Math-Shepherd trajectories) and the first questions of
-data/gsm8k_qwen0.5b_bon16.jsonl -- plus Qwen2.5-0.5B, which Hugging Face
-downloads on first use (about 1 GB). Everything is written under
-runs/smoke/ and the script stops at the first failing stage.
-
-The numbers it prints are meaningless (a head trained for one epoch on 120
-trajectories); the point is that every script runs end to end with the same
-arguments the full experiments use. run_experiments.py runs the real thing.
-"""
 
 import argparse
 import json
@@ -40,7 +26,7 @@ def main():
     for d in (data, cache, ckpt, res):
         os.makedirs(d)
 
-    # 120 training and 30 validation trajectories from the bundled sample.
+    # 120 training and 30 validation trajectories from the bundled sample
     with open(os.path.join("data", "dummy_train.jsonl"), encoding="utf-8") as f:
         rows = [line for line in f if line.strip()]
     with open(os.path.join(data, "train.jsonl"), "w", encoding="utf-8") as f:

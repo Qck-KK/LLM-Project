@@ -1,30 +1,4 @@
-"""Builds every data file the experiments read.
 
-    python prepare_data.py split      # Math-Shepherd -> data/train.jsonl, data/val.jsonl
-    python prepare_data.py generate   # GSM8K test -> data/gsm8k_qwen0.5b_bon16.jsonl
-    python prepare_data.py convert    # candidates -> data/single_eval.jsonl
-
-split
-    Downloads peiyi9979/Math-Shepherd (444,655 trajectories) from the Hugging
-    Face Hub and holds out 1% (4,447) for validation, as in the reported runs.
-    The original split used an unrecorded shuffle, so this seeded split has the
-    same sizes and format but not the same rows; results reproduce up to that
-    sampling difference.
-
-generate
-    Samples 16 solutions per GSM8K test question (1,319) from
-    Qwen/Qwen2.5-0.5B-Instruct with temperature 0.7, top-p 0.95 and at most 512
-    new tokens, and marks each correct when its last number equals the gold
-    answer. The released data/gsm8k_qwen0.5b_bon16.jsonl was generated without
-    a fixed seed, so a rerun gives a different sample; the file itself is
-    committed so that the Best-of-N results can be reproduced exactly.
-
-convert
-    Turns each candidate into the step format the encoder reads: steps are the
-    paragraphs of the solution (split on blank lines), and every candidate keeps
-    its question_id and candidate_id. Deterministic; on Windows the output is
-    byte-identical to the data/single_eval.jsonl used for the reported results.
-"""
 
 import argparse
 import json
@@ -105,7 +79,6 @@ def generate(args):
 
 
 def solution_steps(text):
-    """Paragraphs of a free-form solution, one step each."""
     return [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
 
 

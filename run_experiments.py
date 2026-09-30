@@ -294,7 +294,7 @@ def main():
             continue
         print(label + " $ " + " ".join(cmd), flush=True)
         if not args.dry_run:
-            # Unbuffered children, so their progress reaches a redirected log.
+            # Unbuffered children, so their progress reaches a redirected log
             subprocess.run(cmd, check=True, env={**os.environ, "PYTHONUNBUFFERED": "1"})
 
 
