@@ -18,6 +18,7 @@ from eval.eval_utils import (
     roc_auc,
 )
 from dataset import parse_math_shepherd
+from prepare_data import gsm8k_gold, last_number, solution_steps
 from eval.eval_bon import majority_choice, weighted_vote_choice
 from pqm_loss import bce_step_loss, pqm_loss
 from reward_heads import (
@@ -48,6 +49,18 @@ class MetricTests(unittest.TestCase):
         labels = torch.ones(4, dtype=torch.long)
         _, accuracy = best_threshold_accuracy(scores, labels)
         self.assertEqual(accuracy, 1.0)
+
+
+class PrepareDataTests(unittest.TestCase):
+    def test_candidate_steps_split_on_blank_lines_including_whitespace(self):
+        text = "Intro:\n\n1. a\n   detail\n   \n2. b\r\n\r\n\n\nAnswer: 4\n"
+        self.assertEqual(solution_steps(text),
+                         ["Intro:", "1. a\n   detail", "2. b", "Answer: 4"])
+
+    def test_answer_extraction(self):
+        self.assertEqual(gsm8k_gold("so 3+4=7\n#### 7"), "7")
+        self.assertEqual(last_number("It costs $1,250, i.e. 1250 in total."), "1250")
+        self.assertIsNone(last_number("no digits here"))
 
 
 class ParserTests(unittest.TestCase):

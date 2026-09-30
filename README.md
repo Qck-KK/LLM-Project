@@ -73,7 +73,8 @@ learning rates -- the representation's step-correctness signal does not
 survive the change of generator and task.
 
 **No frozen head beats majority voting at Best-of-N.** Reranking 16
-Qwen2.5-0.5B candidates per GSM8K question (1,319 questions):
+candidates per GSM8K test question sampled from Qwen2.5-0.5B-Instruct
+(temperature 0.7, top-p 0.95; 1,319 questions):
 
 | selector | BoN@16 [95% CI] |
 |---|---|
@@ -185,12 +186,15 @@ not re-tested on corrected data.
   60-epoch cap, selected the same epoch-30 checkpoint and early-stopped at 35.
 * **Single encoder, single training corpus.** Math-Shepherd's Monte-Carlo step
   labels are noisy, and nothing here separates that from the architecture
-  question. Best-of-N uses one generator (Qwen2.5-0.5B) on one benchmark.
+  question. Best-of-N uses one generator (Qwen2.5-0.5B-Instruct) on one benchmark.
 
 ## Repository layout
 
 Core pipeline:
 
+- `prepare_data.py` — builds the data files: the Math-Shepherd train/validation
+  split, the GSM8K Best-of-N candidates, and their step-format evaluation file
+- `smoke_test.py` — runs every stage below on bundled sample data in minutes
 - `encoder.py` — frozen step encoder; one hidden state per `ки` marker
 - `precompute_embeddings.py`, `precompute_eval_embeddings.py` — build caches;
   `--lora_path` exports from a LoRA-adapted encoder instead
@@ -234,11 +238,35 @@ Run evaluation and analysis as modules from the repository root, for example
 ```bash
 pip install -r requirements.txt
 python -m unittest discover -v
-python run_experiments.py --dry_run
+python smoke_test.py
 ```
 
+`smoke_test.py` checks that the whole pipeline runs: on the 150 bundled
+Math-Shepherd trajectories and 4 GSM8K questions it encodes with Qwen2.5-0.5B
+(downloaded on first use, about 1 GB), trains all six heads and a BCE variant,
+runs every evaluation and statistical script, Best-of-N, and a small LoRA pass.
+It takes about 2.5 minutes on an RTX 4060; `--no_lora` skips the stage that
+needs `peft`. Its numbers are meaningless by design.
+
+To reproduce the reported experiments:
+
+```bash
+python prepare_data.py split       # Math-Shepherd -> data/train.jsonl, data/val.jsonl
+python prepare_data.py convert     # bundled candidates -> data/single_eval.jsonl
+python precompute_embeddings.py --train_file data/train.jsonl --cache_dir cache/train_fixed
+python precompute_embeddings.py --train_file data/val.jsonl --cache_dir cache/val_fixed
+python precompute_eval_embeddings.py --eval_file data/single_eval.jsonl --cache_dir cache/single_eval
+python run_experiments.py          # everything else; --dry_run lists the steps
+```
+
+Two inputs are committed because they cannot be regenerated identically: the
+GSM8K candidates were sampled without a fixed seed (`prepare_data.py generate`
+re-samples them with one), and the original train/validation split used an
+unrecorded shuffle, so `split` yields the same sizes but different validation
+rows. Everything downstream is deterministic.
+
 `TRAINING_WORKFLOW.md` is the step-by-step manual and `RESULTS_MAP.md` says
-which result directory answers which question. Of the 27 tests, several are
+which result directory answers which question. Of the 29 tests, several are
 invariants rather than unit tests -- pointwise heads must score prefixes and full
 trajectories identically, plain attention must be permutation equivariant, a
 multi-line final step must stay one step -- and each of those exists because the

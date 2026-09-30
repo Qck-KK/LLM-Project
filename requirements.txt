@@ -1,5 +1,8 @@
+# Tested with torch 2.13, transformers 5.13, peft 0.21, datasets 5.0 (encoding,
+# LoRA, data preparation) and torch 2.5.1 (heads and evaluation).
 torch>=2.1
 transformers>=4.40
 peft>=0.10
+datasets>=2.18
 matplotlib>=3.7
 jupyter>=1.0

@@ -121,6 +121,13 @@ python -m unittest discover -v
 python -m py_compile *.py analysis/*.py eval/*.py tests/*.py
 ```
 
+Then run the end-to-end smoke test, which executes every stage of this manual on
+150 bundled trajectories and 4 GSM8K questions in a few minutes:
+
+```bash
+python smoke_test.py
+```
+
 Device selection order:
 
 ```text
@@ -131,41 +138,52 @@ You can force a device with `--device cuda`, `--device mps`, or `--device cpu`.
 
 ## 2. Data Preparation
 
+`prepare_data.py` builds every data file the experiments read. The repository
+ships the two inputs that cannot be regenerated identically: a 150-trajectory
+Math-Shepherd sample (`data/dummy_train.jsonl`, used by `smoke_test.py`) and the
+Best-of-N candidates (`data/gsm8k_qwen0.5b_bon16.jsonl`).
+
+```bash
+python prepare_data.py split     # data/train.jsonl (440,208) + data/val.jsonl (4,447)
+python prepare_data.py convert   # data/single_eval.jsonl (21,104 candidates)
+python prepare_data.py generate  # optional: re-sample the Best-of-N candidates
+```
+
 ### 2.1 Training and Validation Sets
 
-The training and validation sets use Math-Shepherd-style JSONL, with one reasoning trajectory per line:
+`split` downloads `peiyi9979/Math-Shepherd` (444,655 trajectories) and holds out
+1% for validation with a fixed seed. Each line is a raw Math-Shepherd record:
 
 ```json
-{"question": "problem", "steps": ["step 1", "step 2"], "labels": [1, 0]}
+{"input": "question Step 1: ... ки
+Step 2: ... ки", "label": "question Step 1: ... +
+Step 2: ... -", "task": "GSM8K"}
 ```
 
-where:
+`label` is `input` with every step marker `ки` replaced by `+` (correct) or `-`
+(incorrect); `dataset.py` turns it into steps and labels (Section "Data parsing
+fixed" above). The split used for the reported results was made with an
+unrecorded shuffle, so a fresh split has the same sizes and format but different
+validation rows; results reproduce up to that sampling difference.
 
-- `question`: the math problem;
-- `steps`: reasoning steps in order;
-- `labels[i] = 1`: step `i` is correct;
-- `labels[i] = 0`: step `i` is incorrect.
+### 2.2 Best-of-N Candidates and the Single-Solution Evaluation Set
 
-Recommended paths:
+`data/gsm8k_qwen0.5b_bon16.jsonl` holds 16 solutions for each of the 1,319 GSM8K
+test questions, sampled from `Qwen/Qwen2.5-0.5B-Instruct` (temperature 0.7,
+top-p 0.95, at most 512 new tokens); a solution is correct when its last number
+equals the gold answer. The committed file was generated without a fixed seed,
+so `generate` (seeded) produces a different sample; use the committed file to
+reproduce the reported Best-of-N numbers.
 
-```text
-data/train.jsonl
-data/val.jsonl
-```
-
-### 2.2 Optional Single-Trajectory Evaluation Set
-
-To evaluate whether an entire solution is correct, prepare:
+`convert` splits each candidate into steps at blank lines and writes
 
 ```json
-{"question": "problem", "steps": ["step 1", "step 2"], "final_correct": 1}
+{"question": "problem", "steps": ["step 1", "step 2"], "final_correct": 1, "question_id": 0, "candidate_id": 0}
 ```
 
-Recommended path:
-
-```text
-data/single_eval.jsonl
-```
+to `data/single_eval.jsonl`, the input of `precompute_eval_embeddings.py`. It is
+deterministic: on Windows the output is byte-identical to the file used for the
+reported results.
 
 ### 2.3 Data Isolation Principle
 

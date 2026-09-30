@@ -1,7 +1,12 @@
 # 1. 忽略缓存与海量数据
 cache/
-data/
-!data/dummy_train.jsonl  # 可选：如果你想保留这个微型测试集，用 ! 强制保留
+runs/
+# Generated data (prepare_data.py) is ignored; the two inputs that cannot be
+# regenerated identically are kept. Git cannot re-include files inside an
+# ignored directory, so ignore the contents rather than data/ itself.
+data/*
+!data/dummy_train.jsonl
+!data/gsm8k_qwen0.5b_bon16.jsonl
 
 # 2. 忽略模型权重文件
 checkpoints/
