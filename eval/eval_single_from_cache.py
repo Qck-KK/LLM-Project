@@ -1,14 +1,4 @@
-"""
-eval_single_from_cache.py
-============================
-Scores a trained head against externally precomputed single-eval embeddings.
-One trajectory-level half calibrates the threshold; the other half is used for
-reported metrics. No LLM forward pass happens here.
 
-Usage:
-    python -m eval.eval_single_from_cache --cache_dir cache/single_eval \
-        --head mlp --checkpoint checkpoints/mlp_head.pt --results_dir results
-"""
 
 import argparse
 import glob
@@ -62,7 +52,6 @@ def main():
             shard = torch.load(path, map_location=device)
             step_hidden = shard["step_hidden"].to(device).float()
             step_mask = shard["step_mask"].to(device)
-            # 自动适配不同数据集的标签键名
             if "final_correct" in shard:
                 labels = shard["final_correct"].to(device)
             elif "label" in shard:
@@ -70,11 +59,9 @@ def main():
             elif "labels" in shard:
                 labels = shard["labels"].to(device)
             else:
-                raise KeyError(f"在 shard 中找不到标签！当前可用的键有: {list(shard.keys())}")
+                raise KeyError(f"Label not found in shard! Available keys: {list(shard.keys())}")
             if labels.dim() == 2:
-                # 找到每道题的最后一个有效步骤的索引
                 lengths = step_mask.sum(dim=1).clamp(min=1).long() - 1
-                # 提取最后一个有效步骤的标签作为整道题的最终标签
                 labels = labels.gather(1, lengths.unsqueeze(1)).squeeze(1)
 
 

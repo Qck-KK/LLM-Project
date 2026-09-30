@@ -1,11 +1,3 @@
-"""
-precompute_eval_embeddings.py
-================================
-Builds a cache for single-solution final-answer evaluation.
-
-Input JSONL, one solution per line:
-{"question": "...", "steps": ["step1", "step2", ...], "final_correct": 1}
-"""
 
 import argparse
 import json

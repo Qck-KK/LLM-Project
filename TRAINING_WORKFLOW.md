@@ -1,182 +1,184 @@
-# 轻量级 PRM 完整实验手册
+# Lightweight PRM Complete Experiment Manual
 
-本文档是本项目唯一的完整实验执行说明。实验从环境准备、数据检查和编码器缓存开始，依次完成数据偏差审计、Reward Head 训练、标准指标评估、置信区间、分层与首错边界分析、扰动实验、因果前缀检查、离线剪枝、Best-of-N 重排序、以及 LoRA 对照。
+This document is the single complete execution guide for the project. The workflow starts with environment setup, data checks, and encoder caching, then proceeds through data-bias auditing, Reward Head training, standard metric evaluation, confidence intervals, stratified and first-error-boundary analyses, perturbation experiments, causal-prefix checks, offline pruning, Best-of-N reranking, and the LoRA comparison.
 
-## 协议已修订，旧版结论作废
+## Protocol Revised: Conclusions from the Old Protocol Are Invalid
 
-本手册的初版规定 `lr=1e-3`、最多 10 epochs、patience=2，并据此比较了五种架构。后续的 6x3 学习率网格证明 **`1e-3` 是三个候选值中对全部六个头都最差的一个**（代价 0.056–0.445 dev loss），而这个影响比被比较的架构差异大 4–8 倍。在调好学习率后架构排名发生反转。
+The initial version of this manual used `lr=1e-3`, at most 10 epochs, and `patience=2`, and compared five architectures under that setup. A later 6×3 learning-rate grid showed that **`1e-3` was the worst of the three candidate values for all six heads** (costing 0.056–0.445 in development loss), and that this effect was 4–8× larger than the architecture differences being compared. After tuning the learning rate, the architecture ranking reversed.
 
-**因此：任何在 `lr=1e-3` 下得到的架构结论都不成立。** 当前协议为：
+**Therefore, any architecture conclusion obtained under `lr=1e-3` is invalid.** The current protocol is:
 
-| 项 | 旧版 | 现行 |
+| Item | Old | Current |
 |---|---|---|
-| 学习率 | `1e-3` | `1e-4`（修复前的网格内对 6 个头中的 5 个最优；修复后 `3e-5` 对 5 个头 development loss 更低，主结果仍用预先确定的 `1e-4`，并在 `3e-5` 下重做了全部评估，见 14G） |
-| epoch 上限 | 10 | 30 |
-| early stopping patience | 2 | 5 |
-| 主指标 | step-level 指标 | step-level 指标 + **Best-of-N** |
+| Learning rate | `1e-3` | `1e-4` (best for 5 of 6 heads in the pre-fix grid; after the data fix, `3e-5` gives lower development loss for 5 heads, but the main results still use the pre-specified `1e-4`; all evaluations were also rerun at `3e-5`, see 14G) |
+| Epoch cap | 10 | 30 |
+| Early-stopping patience | 2 | 5 |
+| Main metrics | Step-level metrics | Step-level metrics + **Best-of-N** |
 
-原先因算力排除的三项现已全部完成，不再是 scope 之外：
+The three items originally excluded for compute reasons have now all been completed and are no longer out of scope:
 
-- **Best-of-N**：编码器缓存是唯一昂贵的部分，而它已经存在，打分只需几秒。BoN 是锚点论文 PQM 自己的主指标，排除它是初版最严重的方法论失误。
-- **多随机种子**：`attention` / `cnn` / `mlp` 各跑 3 个种子。
-- **LoRA**：全量 440k 过一轮，作为"冻结编码器"这一前提的对照。
+- **Best-of-N**: the encoder cache is the only expensive part, and it already exists; scoring takes only a few seconds. BoN is also the main metric in the anchor PQM paper, so excluding it was the most serious methodological omission in the initial version.
+- **Multiple random seeds**: `attention` / `cnn` / `mlp` are each run with 3 seeds.
+- **LoRA**: one full pass over all 440k examples is used as a comparison against the frozen-encoder assumption.
 
-## 数据解析已修复，修复前的全部结果作废
+## Data Parsing Fixed: All Pre-Fix Results Are Invalid
 
-`dataset.py` 原先按换行切分步骤，把不以 `+`/`-` 结尾的行都当成错误步骤。Math-Shepherd 的一个步骤可以跨多行（最常见的是结尾的 `Step k: …\n\n# Answer\n\n42`），于是一个步骤被切成最多三个，多出的都被标成错误：13.5% 的错误标签是假的，17% 的全对轨迹被标成含错误，且假错误集中在最后一步之前。现在改为按 `ки` 标记切分步骤、从 `label` 同位置的 `+`/`-` 读标签；不符合该格式的记录会被拒绝并计数（114 条，0.03%）。
+`dataset.py` originally split steps by newline and treated every line not ending in `+` / `-` as an incorrect step. A Math-Shepherd step can span multiple lines (most commonly a final step such as `Step k: …\n\n# Answer\n\n42`), so one true step could be split into as many as three steps, with the extra ones labeled as errors. As a result, 13.5% of error labels were spurious, 17% of fully correct trajectories were labeled as containing errors, and false errors were concentrated near the final step.
 
-`cache/train_clean`、`cache/val_clean`、`cache/val_lora` 以及由它们得到的所有 checkpoint 和结果目录（`results_conv/`、`results_long30/`、`results_lrsweep/`、`results_seeds/`、`results_patience4/`、`results_loraeval/` 等）都建立在错误标签上，仅作记录保留。
+The parser now splits by the `ки` marker and reads the `+` / `-` label from the aligned location in `label`. Records that do not match this format are rejected and counted (114 records, 0.03%).
 
-### 路径约定
+`cache/train_clean`, `cache/val_clean`, `cache/val_lora`, and every checkpoint/result directory derived from them (`results_conv/`, `results_long30/`, `results_lrsweep/`, `results_seeds/`, `results_patience4/`, `results_loraeval/`, etc.) were built on incorrect labels and are retained only as historical records.
 
-本手册的命令使用修复后的路径：
+### Path Conventions
 
-| 用途 | 路径 |
+This manual uses the fixed paths:
+
+| Purpose | Path |
 |---|---|
-| 训练 / 验证 cache | `cache/train_fixed`、`cache/val_fixed` |
-| 最终 checkpoint | `checkpoints/final/{head}_head.pt` |
-| 训练记录与最终评估结果 | `results_final/` |
-| 消融（loss、zeta、lr、种子） | `checkpoints/ablations/`、`results_ablations/` |
+| Training / validation cache | `cache/train_fixed`, `cache/val_fixed` |
+| Final checkpoint | `checkpoints/final/{head}_head.pt` |
+| Training logs and final evaluation results | `results_final/` |
+| Ablations (loss, zeta, lr, seeds) | `checkpoints/ablations/`, `results_ablations/` |
 
-`run_experiments.py` 按本手册的顺序执行全部基于缓存的实验（见 14G）。第 14A、14E、14F 节保留的是修复前实际运行过的命令，作为历史记录。
+`run_experiments.py` executes all cache-based experiments in the order described in this manual (see 14G). Sections 14A, 14E, and 14F retain commands that were actually run before the parser fix as historical records.
 
-训练仍使用固定种子 `42`（多种子实验另用 43、44）。除 embedding 预计算与 LoRA 训练外，其余实验全部复用缓存，不再运行 Qwen。
+Training still uses fixed seed `42` (with 43 and 44 used for the multi-seed experiment). Except for embedding precomputation and LoRA training, all remaining experiments reuse cached representations and do not rerun Qwen.
 
-## 0. 完整实验顺序
+## 0. Complete Experiment Order
 
-必须按以下顺序执行：
+The experiments should be run in the following order:
 
 ```text
-环境与数据准备
+Environment and data preparation
         ↓
-可选硬件基准测试
+Optional hardware benchmark
         ↓
-冻结 Qwen 编码器，生成 train/val cache
+Freeze Qwen encoder and generate train/val cache
         ↓
-数据与位置偏差审计
+Data and positional bias audit
         ↓
-训练 Linear / MLP / CNN / BiGRU / Attention / Attention-PE
+Train Linear / MLP / CNN / BiGRU / Attention / Attention-PE
         ↓
-检查 train/development loss 与最佳 epoch
+Inspect train/development loss and best epoch
         ↓
-Held-out step-level 标准评估
+Held-out step-level standard evaluation
         ↓
-可选 single-solution 评估
+Optional single-solution evaluation
         ↓
-Majority / Position-only / Coin-flip baseline
+Majority / Position-only / Coin-flip baselines
         ↓
-按轨迹长度、首错位置、错误数量进行分层分析
+Stratified analysis by trajectory length, first-error position, and error count
         ↓
-首个错误边界与同位置正确边界对照
+First-error boundary vs. position-matched correct-boundary control
         ↓
-可选确定性扰动实验
+Optional deterministic perturbation experiments
         ↓
-完整轨迹分数与因果前缀分数比较
+Compare full-trajectory scores with causal-prefix scores
         ↓
-校准剪枝阈值并进行 held-out 离线回放
+Calibrate pruning thresholds and run held-out offline replay
         ↓
-误剪—检出—安全步骤节省权衡
+False-pruning–detection–safe-step-saving trade-off
         ↓
-学习率网格（决定上面所有架构结论是否成立）
+Learning-rate grid (determines whether the architecture conclusions above are valid)
         ↓
-轨迹级配对 bootstrap 置信区间
+Trajectory-level paired bootstrap confidence intervals
         ↓
-Best-of-N 重排序 vs majority voting
+Best-of-N reranking vs. majority voting
         ↓
-LoRA 对照（冻结前提是否成立）
+LoRA comparison (tests whether the frozen-encoder assumption is valid)
         ↓
-早停与种子敏感性
+Early-stopping and seed sensitivity
         ↓
-汇总最终表格、曲线与报告结论
+Aggregate final tables, plots, and report conclusions
 ```
 
-学习率网格排在架构分析之后，是因为历史顺序如此；**若从头重做，它应当排在训练之前** —— 先确定每个头的学习率，再比较架构。
+The learning-rate grid appears after architecture analysis because that is the historical order. **If rerunning from scratch, it should be moved before training**: determine a suitable learning rate for each head first, then compare architectures.
 
-完整实验要回答以下问题：
+The complete experiment is designed to answer the following questions:
 
-1. 数据中的类别比例或步骤位置是否已经可以预测正确性？
-2. 冻结编码器的单步表示是否包含正确性信号？
-3. CNN、BiGRU、Attention 等上下文模型是否优于 Linear/MLP？
-4. 不同网络的差异发生在短轨迹、长轨迹、局部错误还是多个连续错误中？
-5. Reward 是否真的在首个错误步骤附近发生下降？
-6. 控制步骤位置后，这种边界效应是否仍然存在？
-7. 顺序和局部信息被扰动后，不同网络是否表现出与其结构一致的敏感性？
-8. 去除未来步骤信息后，各奖励头的性能还能保留多少？
-9. 在限制正确轨迹误剪率的条件下，奖励信号能否转化为安全的理论步骤节省？
+1. Can class balance or step position alone already predict correctness?
+2. Does the frozen encoder's single-step representation contain correctness signal?
+3. Do contextual models such as CNN, BiGRU, and Attention outperform Linear/MLP?
+4. Where do architecture differences occur: short vs. long trajectories, local errors, or multiple consecutive errors?
+5. Does the reward actually drop around the first incorrect step?
+6. Does that boundary effect remain after controlling for step position?
+7. When order or local information is perturbed, do different models exhibit sensitivities consistent with their architectures?
+8. After removing future-step information, how much performance remains for each reward head?
+9. Under a constrained false-pruning rate on correct trajectories, can reward signals translate into safe theoretical step savings?
 
-## 1. 环境准备
+## 1. Environment Setup
 
-进入项目目录并安装依赖：
+Enter the project directory and install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-运行基础检查：
+Run the basic checks:
 
 ```bash
 python -m unittest discover -v
 python -m py_compile *.py analysis/*.py eval/*.py tests/*.py
 ```
 
-设备选择顺序为：
+Device selection order:
 
 ```text
 CUDA → MPS → CPU
 ```
 
-也可以通过 `--device cuda`、`--device mps` 或 `--device cpu` 强制指定。
+You can force a device with `--device cuda`, `--device mps`, or `--device cpu`.
 
-## 2. 数据准备
+## 2. Data Preparation
 
-### 2.1 训练集与验证集
+### 2.1 Training and Validation Sets
 
-训练集和验证集使用 Math-Shepherd 风格 JSONL，每行一条推理轨迹：
+The training and validation sets use Math-Shepherd-style JSONL, with one reasoning trajectory per line:
 
 ```json
-{"question": "题目", "steps": ["步骤 1", "步骤 2"], "labels": [1, 0]}
+{"question": "problem", "steps": ["step 1", "step 2"], "labels": [1, 0]}
 ```
 
-其中：
+where:
 
-- `question`：数学题；
-- `steps`：按顺序排列的推理步骤；
-- `labels[i] = 1`：第 `i` 步正确；
-- `labels[i] = 0`：第 `i` 步错误。
+- `question`: the math problem;
+- `steps`: reasoning steps in order;
+- `labels[i] = 1`: step `i` is correct;
+- `labels[i] = 0`: step `i` is incorrect.
 
-建议目录：
+Recommended paths:
 
 ```text
 data/train.jsonl
 data/val.jsonl
 ```
 
-### 2.2 可选单条轨迹评估集
+### 2.2 Optional Single-Trajectory Evaluation Set
 
-如果需要判断整条解答是否正确，准备：
+To evaluate whether an entire solution is correct, prepare:
 
 ```json
-{"question": "题目", "steps": ["步骤 1", "步骤 2"], "final_correct": 1}
+{"question": "problem", "steps": ["step 1", "step 2"], "final_correct": 1}
 ```
 
-建议路径：
+Recommended path:
 
 ```text
 data/single_eval.jsonl
 ```
 
-### 2.3 数据隔离原则
+### 2.3 Data Isolation Principle
 
-本项目把验证 cache 按轨迹固定切成两半：
+The validation cache is deterministically split by trajectory into two halves:
 
-- calibration/development 半区：早停和分类阈值选择；
-- held-out test 半区：只用于最终指标和行为分析。
+- calibration/development half: used for early stopping and classification-threshold selection;
+- held-out test half: used only for final metrics and behavioral analyses.
 
-所有脚本使用相同的 `calibration_fraction=0.5` 和 `split_seed=42`，保证切分完全一致。同一条轨迹的步骤不会跨越两个子集。
+All scripts use the same `calibration_fraction=0.5` and `split_seed=42`, ensuring an identical split. Steps from the same trajectory never cross between the two subsets.
 
-## 3. 可选：硬件吞吐基准实验
+## 3. Optional: Hardware Throughput Benchmark
 
-如果还没有 embedding cache，建议先估计预计算时间：
+If the embedding cache does not yet exist, first estimate precomputation time:
 
 ```bash
 python benchmark.py \
@@ -188,19 +190,19 @@ python benchmark.py \
   --dataset_size 445000
 ```
 
-把 `dataset_size` 替换为实际训练样本数。该实验记录：
+Replace `dataset_size` with the actual number of training examples. The benchmark records:
 
-- batch/second；
-- example/second；
-- token/second；
-- CUDA 峰值显存或 MPS 当前内存；
-- 估算的每个 epoch 时间。
+- batches/second;
+- examples/second;
+- tokens/second;
+- CUDA peak memory or current MPS memory;
+- estimated time per epoch.
 
-如果 train/val cache 已经存在，可以跳过该实验。
+If train/val caches already exist, this experiment can be skipped.
 
-## 4. 冻结编码器并生成缓存
+## 4. Freeze the Encoder and Generate Caches
 
-### 4.1 训练集 cache
+### 4.1 Training Cache
 
 ```bash
 python precompute_embeddings.py \
@@ -211,7 +213,7 @@ python precompute_embeddings.py \
   --dtype float16
 ```
 
-### 4.2 验证集 cache
+### 4.2 Validation Cache
 
 ```bash
 python precompute_embeddings.py \
@@ -222,7 +224,7 @@ python precompute_embeddings.py \
   --dtype float16
 ```
 
-### 4.3 可选 single-eval cache
+### 4.3 Optional Single-Eval Cache
 
 ```bash
 python precompute_eval_embeddings.py \
@@ -233,29 +235,29 @@ python precompute_eval_embeddings.py \
   --dtype float16
 ```
 
-预期目录结构：
+Expected directory structure:
 
 ```text
 cache/train_fixed/hidden_size.txt
 cache/train_fixed/shard_*.pt
 cache/val_fixed/hidden_size.txt
 cache/val_fixed/shard_*.pt
-cache/single_eval/hidden_size.txt       # 可选
-cache/single_eval/shard_*.pt            # 可选
+cache/single_eval/hidden_size.txt        # optional
+cache/single_eval/shard_*.pt             # optional
 ```
 
-三个 split 必须使用相同的：
+All three splits must use the same:
 
-- `model_name`；
-- step token；
-- `max_length`；
-- tokenizer 配置。
+- `model_name`;
+- step token;
+- `max_length`;
+- tokenizer configuration.
 
-如果缓存来自另一台机器，复制后不要重新运行编码器，直接进入实验一。
+If caches were copied from another machine, do not rerun the encoder; proceed directly to Experiment 1.
 
-## 5. 实验一：数据质量与位置偏差审计
+## 5. Experiment 1: Data Quality and Positional Bias Audit
 
-在比较网络之前，先确认数据中是否存在类别比例或步骤位置偏差：
+Before comparing networks, first determine whether the data contain class-imbalance or step-position bias:
 
 ```bash
 python -m analysis.analyze_data_bias \
@@ -266,21 +268,21 @@ python -m analysis.analyze_data_bias \
   --split_seed 42
 ```
 
-该实验统计：
+This experiment measures:
 
-- 正确/错误步骤数量与比例；
-- 轨迹长度分布；
-- 同时包含正确和错误步骤的轨迹比例；
-- `正确→错误` 与 `错误→正确` 转移次数；
-- 第一个错误步骤的相对位置；
-- 不同相对位置区间的错误率。
+- counts and proportions of correct/incorrect steps;
+- trajectory-length distribution;
+- fraction of trajectories containing both correct and incorrect steps;
+- number of `correct→incorrect` and `incorrect→correct` transitions;
+- relative position of the first incorrect step;
+- error rate in different relative-position bins.
 
-同时计算两个确定性基线：
+It also computes two deterministic baselines:
 
-- `majority`：始终预测 calibration 半区的多数类；
-- `position_only`：只使用步骤的相对位置区间预测，不读取 embedding。
+- `majority`: always predict the majority class in the calibration half;
+- `position_only`: predict using only the step's relative-position bin, without reading the embedding.
 
-输出：
+Outputs:
 
 ```text
 results_final/data_bias.json
@@ -289,30 +291,30 @@ results_final/position_label_rates.csv
 results_final/deterministic_baselines.json
 ```
 
-这一实验首先回答：后续模型是否只是利用“越靠后越容易错误”的数据规律。
+This experiment first asks whether later models are merely exploiting a dataset pattern such as “later steps are more likely to be wrong.”
 
-## 6. 实验二：训练六种轻量 Reward Head
+## 6. Experiment 2: Train Six Lightweight Reward Heads
 
-训练模型：
+Models:
 
-- Linear；
-- MLP；
-- CNN；
-- BiGRU；
-- Attention；
-- Attention + 正弦位置编码（`attention_pe`，在扰动实验发现无位置编码的 attention 置换等变后加入）。
+- Linear;
+- MLP;
+- CNN;
+- BiGRU;
+- Attention;
+- Attention + sinusoidal positional encoding (`attention_pe`, added after perturbation experiments showed that attention without positional encoding is permutation equivariant).
 
-六个模型必须使用完全相同的：
+All six models must use exactly the same:
 
-- train cache；
-- development 切分；
-- 最大 30 epochs；
-- 学习率 `1e-4`；
-- PQM margin `zeta=4.0`；
-- 固定随机种子 `42`；
-- patience 为 5 的早停规则。
+- train cache;
+- development split;
+- maximum 30 epochs;
+- learning rate `1e-4`;
+- PQM margin `zeta=4.0`;
+- fixed seed `42`;
+- early-stopping patience of 5.
 
-运行：
+Run:
 
 ```bash
 for head in linear mlp cnn gru attention attention_pe; do
@@ -332,16 +334,16 @@ for head in linear mlp cnn gru attention attention_pe; do
 done
 ```
 
-训练协议：
+Training protocol:
 
-1. 每个模型最多训练 30 epochs；
-2. 每个 epoch 在 calibration/development 半区计算 PQM loss；
-3. 连续五个 epoch 没有改善则提前停止；
-4. 始终保留 development loss 最低的 checkpoint；
-5. held-out test 半区不参与 checkpoint 选择；
-6. 每个 epoch 内记录约五个训练 loss 点，避免只有少量曲线点。
+1. Each model trains for at most 30 epochs.
+2. PQM loss is evaluated on the calibration/development half after each epoch.
+3. Training stops early after five consecutive epochs without improvement.
+4. The checkpoint with the lowest development loss is always retained.
+5. The held-out test half is never used for checkpoint selection.
+6. About five training-loss points are recorded per epoch so the learning curve is not overly sparse.
 
-每个模型输出：
+Each model outputs:
 
 ```text
 checkpoints/final/{head}_head.pt
@@ -350,20 +352,20 @@ results_final/{head}_loss_history.json
 results_final/{head}_loss_curve.png
 ```
 
-其中：
+where:
 
-- `epochs`：实际运行的 epoch 数；
-- `max_epochs`：最大值 30；
-- `best_epoch`：最终保留 checkpoint 对应的 epoch；
-- `stopped_early`：是否触发早停；
-- `final_train_loss`：最佳 epoch 的训练 loss；
-- `final_eval_loss`：最佳 epoch 的 development loss。
+- `epochs`: number of epochs actually run;
+- `max_epochs`: maximum value, 30;
+- `best_epoch`: epoch corresponding to the retained checkpoint;
+- `stopped_early`: whether early stopping was triggered;
+- `final_train_loss`: training loss at the best epoch;
+- `final_eval_loss`: development loss at the best epoch.
 
-注意：CNN 的 padding mask 已改为在每层卷积后重新应用。旧实现训练得到的 CNN checkpoint 应重新训练。
+Note: the CNN padding mask is now reapplied after every convolutional layer. CNN checkpoints trained with the old implementation should be retrained.
 
-## 7. 实验三：训练过程与效率比较
+## 7. Experiment 3: Training Dynamics and Efficiency Comparison
 
-训练完成后检查：
+After training, inspect:
 
 ```text
 results_final/{head}_loss_curve.png
@@ -371,18 +373,18 @@ results_final/{head}_loss_history.json
 results_final/{head}_efficiency.json
 ```
 
-比较：
+Compare:
 
-- train loss 是否持续下降；
-- development loss 是否趋于稳定或开始上升；
-- 不同 head 的最佳 epoch；
-- 可训练参数量；
-- 总训练时间；
-- CUDA 峰值显存。
+- whether train loss keeps decreasing;
+- whether development loss stabilizes or begins to rise;
+- the best epoch for each head;
+- number of trainable parameters;
+- total training time;
+- CUDA peak memory.
 
-报告中不要仅比较最终 loss。建议画参数量—性能、训练时间—性能 Pareto 图或在最终表中同时给出效率指标。
+Do not compare only the final loss in the report. Prefer a parameter–performance or training-time–performance Pareto plot, or include efficiency metrics alongside performance in the final table.
 
-## 8. 实验四：Held-out Step-level 标准评估
+## 8. Experiment 4: Held-Out Step-Level Standard Evaluation
 
 ```bash
 for head in linear mlp cnn gru attention attention_pe; do
@@ -396,37 +398,37 @@ for head in linear mlp cnn gru attention attention_pe; do
 done
 ```
 
-评估流程：
+Evaluation procedure:
 
-1. 在 calibration 半区搜索分类阈值；
-2. 在 held-out test 半区固定使用该阈值；
-3. 不允许在 test 半区重新选择阈值。
+1. Search for the classification threshold on the calibration half.
+2. Fix that threshold and evaluate on the held-out test half.
+3. Never re-select the threshold on the test half.
 
-报告指标：
+Reported metrics:
 
-- Step Accuracy；
-- Balanced Accuracy；
-- ROC-AUC；
-- Average Precision；
-- 同一轨迹内的 Q-value Ranking Accuracy。
+- Step Accuracy;
+- Balanced Accuracy;
+- ROC-AUC;
+- Average Precision;
+- within-trajectory Q-value Ranking Accuracy.
 
-主要指标建议使用：
+Recommended primary metrics:
 
-- ROC-AUC；
-- Average Precision；
-- Q-value Ranking Accuracy。
+- ROC-AUC;
+- Average Precision;
+- Q-value Ranking Accuracy.
 
-这些指标不依赖在 test 上调出的阈值。普通 Accuracy 只作为辅助指标。
+These metrics do not depend on a threshold tuned on the test set. Ordinary Accuracy is only a supporting metric.
 
-输出：
+Output:
 
 ```text
 results_final/{head}_step_metrics.json
 ```
 
-## 9. 实验五：可选 Single-solution 评估
+## 9. Experiment 5: Optional Single-Solution Evaluation
 
-如果存在 `cache/single_eval`：
+If `cache/single_eval` exists:
 
 ```bash
 for head in linear mlp cnn gru attention attention_pe; do
@@ -441,31 +443,31 @@ for head in linear mlp cnn gru attention attention_pe; do
 done
 ```
 
-该实验先把每一步 Q-value 聚合成整条轨迹分数。当前支持：
+This experiment first aggregates per-step Q-values into a trajectory-level score. Supported aggregation methods:
 
-- `min`：最低步骤分数；
-- `mean`：平均步骤分数；
-- `last`：最后一步分数。
+- `min`: minimum step score;
+- `mean`: mean step score;
+- `last`: final-step score.
 
-默认使用 `min`。如需比较聚合策略，可以分别运行三次，但应保存到不同结果目录，避免后一次覆盖前一次。
+`min` is the default. To compare aggregation strategies, run all three separately and save them to different result directories to avoid overwriting.
 
-报告：
+Reported metrics:
 
-- held-out Accuracy；
-- Balanced Accuracy；
-- ROC-AUC；
-- Average Precision；
-- Pairwise Separation。
+- held-out Accuracy;
+- Balanced Accuracy;
+- ROC-AUC;
+- Average Precision;
+- Pairwise Separation.
 
-输出：
+Output:
 
 ```text
 results_final/{head}_single_metrics.json
 ```
 
-## 10. 实验六：随机掷硬币基线
+## 10. Experiment 6: Random Coin-Flip Baseline
 
-随机 baseline 不训练模型，计算成本可以忽略：
+The random baseline does not train a model and has negligible compute cost:
 
 ```bash
 python -m eval.eval_coin_flip_baseline \
@@ -478,25 +480,25 @@ python -m eval.eval_coin_flip_baseline \
   --split_seed 42
 ```
 
-如果不存在 single-eval cache，删除：
+If the single-eval cache does not exist, remove:
 
 ```text
 --single_cache_dir cache/single_eval
 ```
 
-该 baseline 只在与其他模型相同的 held-out test 半区上运行。它不能替代实验一中的 majority 和 position-only baseline。
+This baseline runs only on the same held-out test half used by the other models. It does not replace the majority and position-only baselines from Experiment 1.
 
-输出：
+Outputs:
 
 ```text
 results_final/coin_flip_efficiency.json
 results_final/coin_flip_step_metrics.json
-results_final/coin_flip_single_metrics.json       # 有 single cache 时
+results_final/coin_flip_single_metrics.json       # when a single cache exists
 ```
 
-## 11. 实验七：架构分层与首错边界分析
+## 11. Experiment 7: Architecture-Stratified and First-Error-Boundary Analysis
 
-运行核心行为分析：
+Run the core behavioral analysis:
 
 ```bash
 python -m analysis.analyze_head_behavior \
@@ -508,54 +510,54 @@ python -m analysis.analyze_head_behavior \
   --split_seed 42
 ```
 
-脚本为每个 head 做一次轻量前向，并保存逐步 Q-value。不会重新运行编码器，也不会重新训练。
+The script performs one lightweight forward pass for each head and saves step-wise Q-values. It does not rerun the encoder or retrain any model.
 
-### 11.1 Pointwise 与 Contextual Head
+### 11.1 Pointwise vs. Contextual Heads
 
-模型分组：
+Model groups:
 
-- Pointwise：Linear、MLP；
-- Contextual：CNN、BiGRU、Attention。
+- Pointwise: Linear, MLP;
+- Contextual: CNN, BiGRU, Attention.
 
-首先比较 pointwise 模型与 position-only baseline。如果 Linear/MLP 明显超过位置基线，说明冻结 encoder 表示本身包含步骤正确性信号。
+First compare pointwise models against the position-only baseline. If Linear/MLP clearly outperform the positional baseline, the frozen encoder representation itself contains step-correctness information.
 
-再比较 contextual 与 pointwise 模型。如果 contextual head 进一步提高性能，说明步骤间关系可能提供额外信息。
+Then compare contextual heads against pointwise heads. If contextual heads improve further, interactions across steps may provide additional useful information.
 
-### 11.2 分层实验
+### 11.2 Stratified Experiments
 
-`behavior_by_group.csv` 和对应图片按以下维度拆分：
+`behavior_by_group.csv` and the corresponding figure break down results by:
 
-- 轨迹长度：short、medium、long；
-- 首错位置：early、middle、late；
-- 错误数量：one_error、multiple_errors。
+- trajectory length: short, medium, long;
+- first-error position: early, middle, late;
+- number of errors: one_error, multiple_errors.
 
-这些结果用于检验：
+These results test whether:
 
-- CNN 是否主要在局部错误附近受益；
-- BiGRU 是否在长轨迹或多错误轨迹上更稳定；
-- Attention 的优势是否随轨迹长度增加；
-- 模型优势是否只出现在后段错误中。
+- CNN benefits mainly near local errors;
+- BiGRU is more stable on long or multi-error trajectories;
+- Attention gains increase with trajectory length;
+- model advantages appear only for late errors.
 
-### 11.3 首个错误边界
+### 11.3 First-Error Boundary
 
-把所有含错误轨迹按照首个错误步骤对齐：
+Align all trajectories containing errors by the first incorrect step:
 
 ```text
-offset=-2   offset=-1   offset=0   offset=+1   offset=+2
-前两步        前一步      首个错误      后一步       后两步
+offset=-2    offset=-1    offset=0    offset=+1    offset=+2
+two before  one before    first error one after    two after
 ```
 
-不同 head 的 Q-value 尺度不同，因此先使用 calibration 半区的分数进行 head 内标准化。
+Because different heads use different Q-value scales, standardize scores within each head using the calibration half.
 
-报告三个量：
+Report three quantities:
 
-- `first_error_boundary_drop`：错误前一步的标准化 Q 减去首错 Q；
-- `matched_correct_boundary_drop`：相同相对位置区间内，`正确→正确` 转移的平均下降；
-- `position_controlled_boundary_effect`：上述两者之差。
+- `first_error_boundary_drop`: standardized Q at the step before the error minus Q at the first error;
+- `matched_correct_boundary_drop`: mean decrease for `correct→correct` transitions in the same relative-position bin;
+- `position_controlled_boundary_effect`: difference between the two quantities above.
 
-如果最后一个指标为正，说明首错处的下降大于普通位置变化能够解释的下降。但这仍是关联性证据，不能直接宣称模型因果地理解了推理错误。
+A positive value for the last metric means the score drop at the first error is larger than ordinary position-related changes can explain. This remains correlational evidence and should not be described as proof that the model causally “understands” reasoning errors.
 
-输出：
+Outputs:
 
 ```text
 results_final/{head}_step_predictions.pt
@@ -568,9 +570,9 @@ results_final/first_error_boundary_curves.csv
 results_final/first_error_boundary.png
 ```
 
-## 12. 实验八：可选确定性扰动实验
+## 12. Experiment 8: Optional Deterministic Perturbation Experiments
 
-该实验不训练模型，只增加几次 reward head 前向：
+This experiment does not train models; it only adds a few reward-head forward passes:
 
 ```bash
 python -m analysis.analyze_head_behavior \
@@ -583,45 +585,45 @@ python -m analysis.analyze_head_behavior \
   --run_perturbations
 ```
 
-扰动包括：
+Perturbations:
 
-- `reverse`：反转有效步骤顺序；
-- `swap_adjacent`：交换相邻步骤；
-- `mask_previous`：把首错前一步 embedding 置零；
-- `mask_first_error`：把首错步骤 embedding 置零。
+- `reverse`: reverse the valid step order;
+- `swap_adjacent`: swap adjacent steps;
+- `mask_previous`: zero out the embedding immediately before the first error;
+- `mask_first_error`: zero out the first-error embedding.
 
-主要观察扰动前后的：
+Primary observations:
 
-- ROC-AUC 变化；
-- Q-value Ranking Accuracy 变化。
+- change in ROC-AUC;
+- change in Q-value Ranking Accuracy.
 
-预期用途：
+Expected use:
 
-- Linear/MLP 对单纯重排应基本不敏感；
-- CNN 对局部邻接破坏更敏感；
-- BiGRU 对顺序反转或相邻交换更敏感；
-- Attention 的变化反映全局交互对当前任务的贡献。
+- Linear/MLP should be nearly insensitive to pure reordering;
+- CNN should be more sensitive to disruption of local adjacency;
+- BiGRU should be more sensitive to sequence reversal or adjacent swaps;
+- Attention changes reflect the contribution of global interactions.
 
-限制：缓存中的 encoder hidden state 已经编码原始上下文和位置信息，因此这些实验属于敏感性分析，而不是严格的因果干预。
+Limitation: cached encoder hidden states already encode the original context and position, so these are sensitivity analyses rather than strict causal interventions.
 
-输出：
+Outputs:
 
 ```text
 results_final/perturbation_results.csv
 results_final/perturbation_sensitivity.png
 ```
 
-## 13. 实验九：因果前缀与离线启发式剪枝
+## 13. Experiment 9: Causal Prefixes and Offline Heuristic Pruning
 
-完整轨迹上的 CNN、BiGRU 和 Attention 分数可能利用后续 step embedding，不能直接模拟在线早停。本实验对第 `t` 步只输入前 `t` 个缓存 embedding，并取前缀最后一步的奖励。冻结 Qwen 不会重新运行。
+CNN, BiGRU, and Attention scores computed on complete trajectories may use future step embeddings and therefore cannot directly simulate online early stopping. For step `t`, this experiment provides only the first `t` cached embeddings and takes the reward at the final step of the prefix. Frozen Qwen is not rerun.
 
-轨迹分为：
+Trajectories are divided into:
 
-- `clean`：所有步骤正确；
-- `monotone_error`：首次错误后不再恢复；
-- `recovery`：出现 `正确→错误→正确`。
+- `clean`: all steps correct;
+- `monotone_error`: after the first error, the trajectory never recovers;
+- `recovery`: contains a `correct→incorrect→correct` pattern.
 
-主剪枝指标只使用前两类；恢复型轨迹单独报告，避免把可能恢复的路径错误地当成必然应被剪枝的路径。
+The main pruning metrics use only the first two groups. Recovery trajectories are reported separately to avoid treating potentially recoverable paths as paths that should necessarily be pruned.
 
 ```bash
 python -m analysis.analyze_offline_pruning \
@@ -638,24 +640,26 @@ python -m analysis.analyze_offline_pruning \
   --seed 42
 ```
 
-脚本比较两种策略：
+The script compares two policies:
 
-- `single_low`：当前奖励低于阈值时停止；
-- `two_consecutive`：连续两个奖励都低于阈值时停止。
+- `single_low`: stop when the current reward falls below the threshold;
+- `two_consecutive`: stop after two consecutive rewards below the threshold.
 
-每个阈值只在 calibration 半区确定，并分别限制全正确轨迹误剪预算为 1%、5% 和 10%。阈值固定后才在 held-out test 半区评估。默认主比较点是 `single_low` 在 5% 误剪预算下的结果。
+Each threshold is calibrated only on the calibration half, with false-pruning budgets of 1%, 5%, and 10% on fully correct trajectories. The threshold is then fixed and evaluated on the held-out test half. The default primary comparison point is `single_low` at a 5% false-pruning budget.
 
-主要指标：
+Primary metrics:
 
-- `clean_false_prune_rate`：全正确轨迹误剪率；
-- `pre_error_false_prune_rate`：首错前错误停止的比例；
-- `error_coverage`：首错后成功停止的错误轨迹比例；
-- `detection_at_0/1/2`：在首错当步、后一步、后两步以内检出的比例；
-- `median_detection_delay`：首错到停止的中位延迟；
-- `safe_step_saving_rate`：只把首错后正确触发带来的剩余步骤计为收益；
-- `oracle_efficiency_ratio`：实现了多少比例的理想首错剪枝空间。
+- `clean_false_prune_rate`: false-pruning rate on fully correct trajectories;
+- `pre_error_false_prune_rate`: fraction stopped incorrectly before the first error;
+- `error_coverage`: fraction of erroneous trajectories successfully stopped after the first error;
+- `detection_at_0/1/2`: fraction detected at the first-error step, within one step, or within two steps;
+- `median_detection_delay`: median delay from the first error to stopping;
+- `safe_step_saving_rate`: only remaining steps saved after a correctly triggered post-error stop count as savings;
+- `oracle_efficiency_ratio`: fraction of the ideal first-error pruning opportunity actually achieved.
 
-1000 次轨迹级 bootstrap 只估计评估不确定性，不会重新训练模型。输出：
+The 1,000 trajectory-level bootstrap samples estimate evaluation uncertainty only; they do not retrain models.
+
+Outputs:
 
 ```text
 results_final/{head}_causal_predictions.pt
@@ -670,11 +674,11 @@ results_final/pruning_tradeoff.png
 results_final/pruning_detection_delay.png
 ```
 
-`theoretical_step_saving_rate` 与 `safe_step_saving_rate` 都是基于缓存轨迹长度的 step-equivalent 指标，不能写成真实 wall-clock 或 FLOPs 加速。
+Both `theoretical_step_saving_rate` and `safe_step_saving_rate` are step-equivalent metrics based on cached trajectory lengths. They must not be described as real wall-clock or FLOPs speedups.
 
-## 14. 实验十：最终结果汇总
+## 14. Experiment 10: Final Result Aggregation
 
-所有实验完成后运行：
+After all experiments are complete, run:
 
 ```bash
 python -m eval.summarize_results \
@@ -683,211 +687,298 @@ python -m eval.summarize_results \
   --out_md results_final/summary.md
 ```
 
-最终表格包含：
+The final table includes:
 
-- 模型参数量；
-- 实际 epoch 数和最佳 epoch；
-- 训练时间和峰值显存；
-- train/development loss；
-- step-level Accuracy、Balanced Accuracy、ROC-AUC、AP；
-- Q-value Ranking Accuracy；
-- optional single-solution 指标；
-- 首错边界下降；
-- 位置匹配的正确边界下降；
-- position-controlled boundary effect；
-- 完整轨迹与因果前缀的分数差异；
-- 5% 误剪预算下的检出率、延迟和安全步骤节省率；
-- majority、position-only、coin-flip baseline。
+- model parameter count;
+- actual epoch count and best epoch;
+- training time and peak memory;
+- train/development loss;
+- step-level Accuracy, Balanced Accuracy, ROC-AUC, and AP;
+- Q-value Ranking Accuracy;
+- optional single-solution metrics;
+- first-error boundary drop;
+- position-matched correct-boundary drop;
+- position-controlled boundary effect;
+- difference between full-trajectory and causal-prefix scores;
+- detection rate, delay, and safe-step-saving rate at the 5% false-pruning budget;
+- majority, position-only, and coin-flip baselines.
 
-输出：
+Outputs:
 
 ```text
 results_final/summary.csv
 results_final/summary.md
 ```
 
-## 14A. 实验十一：学习率网格（最重要的一步）
+## 14A. Experiment 11: Learning-Rate Grid — The Most Important Step
 
-初版协议把 `lr` 固定在 `1e-3` 然后比较架构。这一步检验那个固定值是否站得住。
+The initial protocol fixed `lr=1e-3` and then compared architectures. This experiment tests whether that fixed value was defensible.
 
-> 历史记录：下面的网格运行在修复前的 `_clean` cache 上。修复后，`run_experiments.py --only lr` 在 `_fixed` cache 上用 `{3e-5, 3e-4}` 重新检验选定的 `1e-4`（`1e-3` 在修复前对全部六个头都明显最差，不再重跑）。
+> Historical record: the grid below was run on the pre-fix `_clean` cache. After the parser fix, `run_experiments.py --only lr` rechecks the selected `1e-4` on `_fixed` caches using `{3e-5, 3e-4}`. Because `1e-3` was clearly worst for all six heads before the fix, it is not rerun.
 
 ```bash
 for lr in 1e-3 3e-4 1e-4; do
   for head in linear mlp cnn gru attention attention_pe; do
-    python train_from_cache.py       --cache_dir cache/train_clean --val_cache_dir cache/val_clean       --head "$head" --epochs 30 --early_stopping_patience 5 --seed 42       --calibration_fraction 0.5 --split_seed 42 --lr "$lr" --zeta 4.0       --save_path "checkpoints/lrsweep/${head}_lr${lr}_head.pt"       --results_dir "results_lrsweep/${head}_lr${lr}"
+    python train_from_cache.py \
+      --cache_dir cache/train_clean \
+      --val_cache_dir cache/val_clean \
+      --head "$head" \
+      --epochs 30 \
+      --early_stopping_patience 5 \
+      --seed 42 \
+      --calibration_fraction 0.5 \
+      --split_seed 42 \
+      --lr "$lr" \
+      --zeta 4.0 \
+      --save_path "checkpoints/lrsweep/${head}_lr${lr}_head.pt" \
+      --results_dir "results_lrsweep/${head}_lr${lr}"
   done
 done
 ```
 
-实测结果：**`1e-3` 对六个头全部最差**，改善幅度 0.056（linear）到 0.445（attention），
-而架构间的差异不超过 0.05。排名因此反转 —— `cnn` 在 `1e-3` 下领先，`attention` 在调好后领先。
+Observed result: **`1e-3` was worst for all six heads**, with improvements ranging from 0.056 (linear) to 0.445 (attention), while architecture differences were no larger than 0.05. The ranking therefore reversed: `cnn` led at `1e-3`, whereas `attention` led after tuning.
 
-两条必须写进 limitation 的边界：网格没有探到下界（`1e-4` 对 5/6 个头最优且趋势单调），
-以及不同容量的头达到最优所需的 epoch 不同（`linear` 约 11，`gru` 约 25）。
+Two boundaries must be stated in the limitations:
 
-## 14B. 实验十二：主指标的置信区间
+- the grid did not probe the lower bound (`1e-4` was best for 5/6 heads and the trend was still monotonic);
+- heads with different capacities require different numbers of epochs to reach their optimum (`linear` around 11, `gru` around 25).
 
-架构排名依赖 0.005 量级的差值，没有区间就无法判断是否为噪声。
+## 14B. Experiment 12: Confidence Intervals for Primary Metrics
+
+Architecture rankings depend on differences on the order of 0.005, so without confidence intervals it is impossible to know whether those differences are noise.
 
 ```bash
-python -m analysis.bootstrap_step_metrics   --cache_dir cache/val_fixed --checkpoint_dir checkpoints/final   --results_dir results_final --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --calibration_fraction 0.5 --split_seed 42 --seed 42
+python -m analysis.bootstrap_step_metrics \
+  --cache_dir cache/val_fixed \
+  --checkpoint_dir checkpoints/final \
+  --results_dir results_final \
+  --heads linear mlp cnn gru attention attention_pe \
+  --bootstrap_samples 2000 \
+  --calibration_fraction 0.5 \
+  --split_seed 42 \
+  --seed 42
 
-python -m analysis.bootstrap_causal_metrics   --results_dir results_final --heads linear mlp cnn gru attention attention_pe   --bootstrap_samples 2000 --seed 42
+python -m analysis.bootstrap_causal_metrics \
+  --results_dir results_final \
+  --heads linear mlp cnn gru attention attention_pe \
+  --bootstrap_samples 2000 \
+  --seed 42
 ```
 
-重采样单位是**轨迹**而非步骤（同一条解答内的步骤高度相关），且所有头在**同一次重采样**上打分，
-这样头与头之间的差值才有正确的配对区间。
+The resampling unit is the **trajectory**, not the step, because steps within the same solution are highly correlated. All heads are scored on the **same bootstrap resample** so head-to-head differences have proper paired intervals.
 
-`bootstrap_causal_metrics` 复用 `analyze_offline_pruning` 已存的 causal predictions，零前向开销。
+`bootstrap_causal_metrics` reuses causal predictions saved by `analyze_offline_pruning`, so it adds no forward-pass cost.
 
-六个头两两比较是每个指标 15 次检验，逐个看区间是否跨 0 会放大假阳性。用 Holm 校正控制族错误率（只读上面两个 pairwise CSV，不需要模型或缓存）：
+Pairwise comparison among six heads creates 15 tests per metric. Inspecting whether each interval crosses zero would inflate false positives. Use Holm correction to control family-wise error rate; this reads only the two pairwise CSV files above and does not require the model or cache:
 
 ```bash
-python -m analysis.holm_correction   results_final/step_metrics_ci_pairwise.csv results_final/causal_metrics_ci_pairwise.csv   --bootstrap_samples 2000
+python -m analysis.holm_correction \
+  results_final/step_metrics_ci_pairwise.csv \
+  results_final/causal_metrics_ci_pairwise.csv \
+  --bootstrap_samples 2000
 ```
 
-输出同名的 `*_pairwise_holm.csv`，原文件不变。差值在每次重采样中都恰为 0（两组完全相同的分数）时 p=1。比较多组以上的实验时，用 `--family prefix|suffix` 只校正有意义的配对（见 14G）。
+Outputs are written to same-named `*_pairwise_holm.csv` files; the originals are preserved. If a pair has exactly zero difference on every bootstrap resample, set `p=1`. When comparing more than one family of groups, use `--family prefix|suffix` so only meaningful comparisons are corrected together (see 14G).
 
-输出：`step_metrics_ci.json` / `.csv` / `_pairwise.csv`、`causal_metrics_ci.json`。
+Outputs: `step_metrics_ci.json` / `.csv` / `_pairwise.csv`, and `causal_metrics_ci.json`.
 
-## 14C. 实验十三：Best-of-N 重排序
+## 14C. Experiment 13: Best-of-N Reranking
 
-这是锚点论文 PQM 的主指标，也是 PRM 最贴近实际的用途。
+This is the main metric in the anchor PQM paper and the PRM use case closest to practical deployment.
 
 ```bash
-python -m eval.eval_bon   --cache_dir cache/single_eval --eval_file data/single_eval.jsonl   --source_file data/gsm8k_qwen0.5b_bon16.jsonl   --checkpoint_dir checkpoints/final --heads linear mlp cnn gru attention attention_pe   --aggs min mean last --ks 1 2 4 8 16 --subsets_per_question 20   --bootstrap_samples 2000 --results_dir results_final --seed 42
+python -m eval.eval_bon \
+  --cache_dir cache/single_eval \
+  --eval_file data/single_eval.jsonl \
+  --source_file data/gsm8k_qwen0.5b_bon16.jsonl \
+  --checkpoint_dir checkpoints/final \
+  --heads linear mlp cnn gru attention attention_pe \
+  --aggs min mean last \
+  --ks 1 2 4 8 16 \
+  --subsets_per_question 20 \
+  --bootstrap_samples 2000 \
+  --results_dir results_final \
+  --seed 42
 ```
 
-两条参照线缺一不可：
+Two reference lines are mandatory:
 
-- `majority_vote`（self-consistency）：只数最终答案，不用奖励模型。**PRM 必须打败它才有部署价值**；
-- `oracle`：16 个候选里只要有一个对就算对，给出重排序的上限。
+- `majority_vote` (self-consistency): count only final answers and do not use the reward model. **A PRM must outperform it to demonstrate deployment value**;
+- `oracle`: count a question as correct if any of the 16 candidates is correct, giving the reranking upper bound.
 
-`k < 16` 时每题抽多个随机子集，避免结果依赖候选的生成顺序。置信区间按**题目**重采样
-（同一题的 16 个候选不独立）。
+For `k < 16`, sample multiple random subsets per question so results do not depend on candidate-generation order. Confidence intervals are bootstrapped **by question**, because the 16 candidates from the same question are not independent.
 
-## 14D. 实验十四：同分布 single-solution 对照
+## 14D. Experiment 14: In-Distribution Single-Solution Control
 
-若 BoN / OOD single-solution 表现差，需要区分"模型做不了轨迹级判断"与"迁移不过去"。
+If BoN / OOD single-solution performance is poor, distinguish between “the model cannot make trajectory-level judgments” and “the model does not transfer out of distribution.”
 
 ```bash
-python -m eval.eval_single_from_step_cache   --cache_dir cache/val_fixed --source_file data/val.jsonl --checkpoint_dir checkpoints/final   --heads linear mlp cnn gru attention attention_pe --aggs min mean last   --results_dir results_final --bootstrap_samples 2000   --calibration_fraction 0.5 --split_seed 42 --seed 42
+python -m eval.eval_single_from_step_cache \
+  --cache_dir cache/val_fixed \
+  --source_file data/val.jsonl \
+  --checkpoint_dir checkpoints/final \
+  --heads linear mlp cnn gru attention attention_pe \
+  --aggs min mean last \
+  --results_dir results_final \
+  --bootstrap_samples 2000 \
+  --calibration_fraction 0.5 \
+  --split_seed 42 \
+  --seed 42
 ```
 
-它复用验证集缓存，把"全部步骤正确"作为轨迹标签，因此与 OOD 版本只差分布。`--source_file` 让这个标签来自原始数据的完整步骤标签：缓存只保留未被 `max_length` 截断的步骤，否则错误只出现在截断部分的解答会被误判为正确（验证集 held-out 半区中 841 条"正确"里有 11 条如此）。
+This reuses the validation cache and uses “all steps correct” as the trajectory label, so the only difference from the OOD version is the data distribution. `--source_file` ensures this label comes from the full original step labels: the cache contains only steps not truncated by `max_length`, otherwise solutions whose only errors occur in the truncated portion would be mislabeled as correct (11 of 841 “correct” trajectories in the held-out validation half have this issue).
 
-## 14E. 实验十五：LoRA 对照
+## 14E. Experiment 15: LoRA Comparison
 
-冻结编码器是**本项目自己引入的简化**，不是 PQM 的做法（后者在 8 卡上全量微调 7B）。
-这一步检验该前提的代价。
+Freezing the encoder is **a simplification introduced by this project**, not the PQM setup (which fully fine-tunes a 7B model on 8 GPUs). This experiment tests the cost of that assumption.
 
-> 历史记录：下面的命令是修复前运行的版本（`train_lora.py` 同样经由 `dataset.py` 读取标签，`cache/val_lora` 也用旧解析器生成）。修复后的 LoRA 对照由 `run_experiments.py --only lora lora_eval` 运行（见 14G），结论与修复前相反：LoRA 显著优于同一 linear 头的冻结版本，并且是唯一在 BoN 上显著超过多数投票的配置。
+> Historical record: the commands below are the pre-fix version (`train_lora.py` also read labels through `dataset.py`, and `cache/val_lora` was generated by the old parser). The post-fix LoRA comparison is run by `run_experiments.py --only lora lora_eval` (see 14G). The post-fix conclusion is the opposite of the pre-fix result: LoRA is significantly better than the frozen version using the same linear head and is the only configuration that significantly outperforms majority voting on BoN.
 
 ```bash
-python train_lora.py   --train_file data/train.jsonl --epochs 1 --batch_size 4 --max_length 512   --lr 1e-4 --zeta 4.0 --seed 42   --save_dir checkpoints/lora_full --results_dir results_lora_full
+python train_lora.py \
+  --train_file data/train.jsonl \
+  --epochs 1 \
+  --batch_size 4 \
+  --max_length 512 \
+  --lr 1e-4 \
+  --zeta 4.0 \
+  --seed 42 \
+  --save_dir checkpoints/lora_full \
+  --results_dir results_lora_full
 
-# LoRA 改变了编码器，评估缓存必须重新生成
-python precompute_embeddings.py --train_file data/val.jsonl   --cache_dir cache/val_lora --lora_path checkpoints/lora_full/adapter   --batch_size 16 --max_length 512 --dtype float16
+# LoRA changes the encoder, so the evaluation cache must be regenerated.
+python precompute_embeddings.py \
+  --train_file data/val.jsonl \
+  --cache_dir cache/val_lora \
+  --lora_path checkpoints/lora_full/adapter \
+  --batch_size 16 \
+  --max_length 512 \
+  --dtype float16
 
-python -m analysis.compare_lora_frozen   --arm "lora_linear:cache/val_lora:linear:checkpoints/lora_eval/linear_head.pt"   --arm "frozen_linear:cache/val_clean:linear:checkpoints/long30/linear_head.pt"   --arm "frozen_attention:cache/val_clean:attention:checkpoints/long30/attention_head.pt"   --results_dir results_loraeval --bootstrap_samples 2000
+python -m analysis.compare_lora_frozen \
+  --arm "lora_linear:cache/val_lora:linear:checkpoints/lora_eval/linear_head.pt" \
+  --arm "frozen_linear:cache/val_clean:linear:checkpoints/long30/linear_head.pt" \
+  --arm "frozen_attention:cache/val_clean:attention:checkpoints/long30/attention_head.pt" \
+  --results_dir results_loraeval \
+  --bootstrap_samples 2000
 ```
 
-在 8GB 显存上可用的操作点只有 `batch_size=4, max_length=512`；`batch_size=8` 会溢出并慢 6.8 倍。
-全量一轮约 10 小时。
+On 8 GB VRAM, the only workable operating point is `batch_size=4, max_length=512`; `batch_size=8` runs out of memory and is 6.8× slower. One full epoch takes about 10 hours.
 
-**解读时必须声明遍历次数不对称**（LoRA 1 轮 vs 冻结 30 轮）。该偏差对冻结侧有利，
-因此"LoRA 无收益"是保守结论，而"LoRA 落败"无法区分于"轮数不够"。
+**Interpretation must explicitly state that the number of passes is asymmetric** (LoRA 1 epoch vs. frozen 30 epochs). This favors the frozen side. Therefore, “LoRA provides no benefit” would be a conservative conclusion, whereas “LoRA loses” cannot be separated from “one epoch was insufficient.”
 
-## 14F. 实验十六：早停与种子敏感性
+## 14F. Experiment 16: Early-Stopping and Seed Sensitivity
 
 ```bash
-# patience 是否扭曲了排名
+# Does patience distort the ranking?
 for head in linear mlp cnn gru attention; do
-  python train_from_cache.py --cache_dir cache/train_clean --val_cache_dir cache/val_clean     --head "$head" --epochs 10 --early_stopping_patience 4 --seed 42     --calibration_fraction 0.5 --split_seed 42 --lr 1e-3 --zeta 4.0     --save_path "checkpoints/patience4/${head}_head.pt"     --results_dir "results_patience4"
+  python train_from_cache.py \
+    --cache_dir cache/train_clean \
+    --val_cache_dir cache/val_clean \
+    --head "$head" \
+    --epochs 10 \
+    --early_stopping_patience 4 \
+    --seed 42 \
+    --calibration_fraction 0.5 \
+    --split_seed 42 \
+    --lr 1e-3 \
+    --zeta 4.0 \
+    --save_path "checkpoints/patience4/${head}_head.pt" \
+    --results_dir "results_patience4"
 done
 
-# 种子方差是否大于架构差异
+# Is seed variance larger than architecture variance?
 for seed in 43 44; do
   for head in attention cnn mlp; do
-    python train_from_cache.py --cache_dir cache/train_clean --val_cache_dir cache/val_clean       --head "$head" --epochs 10 --early_stopping_patience 2 --seed "$seed"       --calibration_fraction 0.5 --split_seed 42 --lr 1e-4 --zeta 4.0       --save_path "checkpoints/seeds/${head}_s${seed}_head.pt"       --results_dir "results_seeds/${head}_s${seed}"
+    python train_from_cache.py \
+      --cache_dir cache/train_clean \
+      --val_cache_dir cache/val_clean \
+      --head "$head" \
+      --epochs 10 \
+      --early_stopping_patience 2 \
+      --seed "$seed" \
+      --calibration_fraction 0.5 \
+      --split_seed 42 \
+      --lr 1e-4 \
+      --zeta 4.0 \
+      --save_path "checkpoints/seeds/${head}_s${seed}_head.pt" \
+      --results_dir "results_seeds/${head}_s${seed}"
   done
 done
 ```
 
-判据是**区间是否重叠**，而不是点估计谁高。实测三个头的 AUC 区间两两不重叠，
-架构差距是种子标准差的 3.5–5.5 倍。
+The criterion is **whether the intervals overlap**, not which point estimate is larger. Empirically, the AUC intervals of the three heads do not overlap pairwise, and the architecture gap is 3.5–5.5× the seed standard deviation.
 
-注意这两项检查都不是在现行协议下做的：patience 检查用的是作废的 `lr=1e-3`，只能说明旧排名不是 patience 造成的；种子检查用的是 `lr=1e-4` 但只有 10 epochs，6 次中有 5 次在第 10 轮取到最佳，尚未收敛。因此它们支持的是 10 轮预算下的排名，而不是 `results_conv/` 中收敛后的数字。两者也都运行在修复前的数据上；修复后的种子检查见 14G 的 `seeds` 组。
+Note that neither check was run under the current full protocol. The patience check used the invalidated `lr=1e-3` and therefore only shows that the old ranking was not caused by patience. The seed check used `lr=1e-4` but only 10 epochs; in 5 of 6 runs, the best checkpoint occurred at epoch 10, so training had not converged. These tests therefore support the ranking under a 10-epoch budget rather than the converged numbers in `results_conv/`. Both were also run on pre-fix data; the post-fix seed check is in the `seeds` group in 14G.
 
-## 14G. 一键运行：修复后的主实验与补充消融
+## 14G. One-Command Workflow: Post-Fix Main Experiments and Supplementary Ablations
 
-`run_experiments.py` 在 `cache/train_fixed` / `cache/val_fixed` 上按顺序执行本手册中全部基于缓存的实验。训练步骤在 checkpoint 与 efficiency 文件都存在时自动跳过，中断后可直接重跑续上；评估步骤每次都重跑。
+`run_experiments.py` executes all cache-based experiments in this manual in order on `cache/train_fixed` / `cache/val_fixed`. Training steps are automatically skipped when both the checkpoint and efficiency file already exist, so an interrupted run can be resumed directly; evaluation steps rerun each time.
 
-| 组 | 内容 | 训练量 |
+| Group | Content | Training Cost |
 |---|---|---|
-| `main` | 六个头，现行协议（`lr=1e-4`、30 epochs、patience 5、`zeta=4`、种子 42） | 6 次 |
-| `main_eval` | 第 5–14D 节的全部评估：偏差审计与基线、held-out 指标、行为 / 首错 / 扰动、因果前缀剪枝、bootstrap 置信区间与 Holm 校正、BoN（argmax 与 PRM 加权投票）、OOD 与同分布 single-solution、汇总表 | 无 |
-| `bce` | PQM 排序 loss 是否优于逐步 BCE？这是锚点论文的核心主张 | linear / mlp / attention |
-| `zeta` | 固定的 `zeta=4.0` 是否敏感？ | linear / attention × `zeta` ∈ {2, 8} |
-| `seeds` | 现行协议下排名是否对种子稳健？ | attention / cnn / mlp × 种子 43、44 |
-| `lr` | 修复后 `1e-4` 是否仍是合适的学习率？ | 六个头 × {`3e-5`, `3e-4`} |
-| `ablation_eval` | 上述各组与最终头的配对 bootstrap + Holm 校正；BCE 头的 BoN | 无 |
-| `long` / `long_eval` | mlp 与 attention_pe 在修复后数据上都在第 30 轮（上限）取最佳；放宽到 60 轮重训并配对比较 | 2 次 |
-| `main_eval_lr3e-5` | 修复后 `3e-5` 对 6 个头中的 5 个 development loss 更低，于是对 `lr` 组训练出的 `3e-5` 头重跑整条评估链，检验结论是否依赖学习率 → `results_final_lr3e-5/` | 无 |
-| `lora` / `lora_eval` | 冻结编码器前提的对照（见 14E），在修复后的数据上重跑；需要装有 `transformers` 与 `peft` 的解释器（`--encoder_python`） | LoRA 1 轮，约 10 小时 |
+| `main` | Six heads under the current protocol (`lr=1e-4`, 30 epochs, patience 5, `zeta=4`, seed 42) | 6 runs |
+| `main_eval` | All evaluations in Sections 5–14D: bias audit and baselines, held-out metrics, behavior / first-error / perturbation, causal-prefix pruning, bootstrap CIs and Holm correction, BoN (argmax and PRM-weighted voting), OOD and in-distribution single-solution, summary table | none |
+| `bce` | Does PQM ranking loss outperform step-wise BCE? This is a central claim of the anchor paper | linear / mlp / attention |
+| `zeta` | Is fixed `zeta=4.0` sensitive? | linear / attention × `zeta` ∈ {2, 8} |
+| `seeds` | Is the ranking robust to seed under the current protocol? | attention / cnn / mlp × seeds 43, 44 |
+| `lr` | Is `1e-4` still a suitable learning rate after the parser fix? | six heads × {`3e-5`, `3e-4`} |
+| `ablation_eval` | Paired bootstrap + Holm correction for all groups above vs. final heads; BoN for BCE heads | none |
+| `long` / `long_eval` | mlp and attention_pe both select epoch 30 on fixed data; retrain to 60 epochs and compare pairwise | 2 runs |
+| `main_eval_lr3e-5` | After the fix, `3e-5` has lower development loss for 5/6 heads, so rerun the full evaluation chain on `3e-5` heads → `results_final_lr3e-5/` | none |
+| `lora` / `lora_eval` | Comparison against the frozen-encoder assumption (see 14E), rerun on fixed data; requires a Python environment with `transformers` and `peft` (`--encoder_python`) | LoRA 1 epoch, about 10 hours |
 
 ```bash
-python run_experiments.py --dry_run                  # 先看将执行的命令
-python run_experiments.py                            # 全部执行
-python run_experiments.py --only main main_eval      # 只跑主实验
-python run_experiments.py --only lr --lrs 3e-5       # lr 组可按学习率拆给并行的多个进程
-python run_experiments.py --only lora lora_eval --encoder_python <带 transformers/peft 的 python>
+python run_experiments.py --dry_run                  # inspect commands first
+python run_experiments.py                            # run everything
+python run_experiments.py --only main main_eval      # main experiment only
+python run_experiments.py --only lr --lrs 3e-5       # split the lr group across parallel processes if desired
+python run_experiments.py --only lora lora_eval --encoder_python <python with transformers/peft>
 ```
 
-输出：
+Outputs:
 
 ```text
-checkpoints/final/{head}_head.pt                     # 主实验
-results_final/                                       # 训练记录与全部主评估
+checkpoints/final/{head}_head.pt                     # main experiment
+results_final/                                       # training logs and all main evaluations
 checkpoints/ablations/{bce,zeta,seeds,lr}/
-results_ablations/train/                             # 消融训练记录
-results_ablations/{seeds,loss_pqm_vs_bce,zeta,lr}.json 与 *_pairwise(_holm).csv
+results_ablations/train/                             # ablation training logs
+results_ablations/{seeds,loss_pqm_vs_bce,zeta,lr}.json and *_pairwise(_holm).csv
 results_ablations/bon_bce/bon_results.csv
-results_ablations/{long,lora_vs_frozen}.json、results_ablations/bon_lora/
-results_final_lr3e-5/                                # 3e-5 头的完整评估
+results_ablations/{long,lora_vs_frozen}.json, results_ablations/bon_lora/
+results_final_lr3e-5/                                # full evaluation of 3e-5 heads
 ```
 
-解读注意：
+Interpretation notes:
 
-- 不同 `zeta` 或不同 loss 的 development loss 数值**不可互相比较**（loss 定义不同），比较只看 held-out ROC-AUC / AP 与 BoN。
-- 学习率之间的比较同时看各自最佳 development loss 与 held-out AUC；若某个学习率在第 30 轮才取到最佳，说明预算不足，不能据此判定其优劣。
-- Holm 校正只在每个消融真正关心的比较之间进行（`--family`）：种子与 loss 比较同一设置下的不同头（`suffix`），zeta、学习率与 60 轮比较同一个头的不同设置（`prefix`）。把跨头又跨设置的配对也算进去没有意义，而且 2,000 次重采样的最小 p 约 0.001，族大于约 50 时任何比较都不可能显著。
-- 编码使用 `transformers`；本机的 `Training` 环境没有安装它，缓存由 `node2` 环境生成。两个环境在未受影响的记录上得到的 embedding 余弦相似度 ≥ 0.99996（fp16 舍入差异）。
+- Development-loss values from different `zeta` values or different loss functions are **not directly comparable** because the loss definitions differ. Compare held-out ROC-AUC / AP and BoN instead.
+- Compare learning rates using both the best development loss and held-out AUC. If a learning rate achieves its best checkpoint only at epoch 30, the budget is insufficient, so superiority/inferiority should not be concluded from that run alone.
+- Holm correction is applied only within comparisons that are meaningful for each ablation (`--family`): seed and loss compare different heads under the same setting (`suffix`), whereas zeta, learning rate, and 60-epoch comparisons compare different settings for the same head (`prefix`). Mixing cross-head and cross-setting pairs is not meaningful; moreover, with 2,000 resamples the minimum p-value is about 0.001, so families larger than about 50 make significance effectively impossible.
+- Encoding uses `transformers`; the local `Training` environment does not have it installed, so caches were generated in the `node2` environment. For unaffected records, the two environments produce embedding cosine similarity ≥ 0.99996 (fp16 rounding differences).
 
-## 15. 使用 Notebook 一次执行完整流程
+## 15. Run the Full Workflow from the Notebook
 
-主入口：
+Main entry point:
 
 ```text
 complete_training.ipynb
 ```
 
-Notebook 已按本手册顺序组织：
+The notebook follows the order in this manual:
 
-1. 设置 cache、checkpoint、results 路径；
-2. 检查 cache；
-3. 数据与位置偏差审计；
-4. 训练六种 head；
-5. 展示 loss 曲线；
-6. step-level held-out 评估；
-7. 分层、首错边界和扰动分析；
-8. 因果前缀检查与离线启发式剪枝；
-9. 可选 single-solution 评估；
-10. coin-flip baseline；
-11. 汇总并展示最终表格、剪枝权衡图和主工作点。
+1. set cache, checkpoint, and result paths;
+2. check caches;
+3. run the data and positional bias audit;
+4. train six heads;
+5. display loss curves;
+6. run held-out step-level evaluation;
+7. run stratified, first-error-boundary, and perturbation analyses;
+8. run causal-prefix checks and offline heuristic pruning;
+9. optionally run single-solution evaluation;
+10. run the coin-flip baseline;
+11. aggregate and display the final table, pruning trade-off plot, and primary operating point.
 
-默认配置：
+Default configuration:
 
 ```python
 LR = 1e-4
@@ -899,79 +990,79 @@ RUN_PERTURBATIONS = True
 HEADS = ["linear", "mlp", "cnn", "gru", "attention", "attention_pe"]
 ```
 
-Notebook 默认不会重新生成 embedding cache。它读取 `cache/train_fixed` 与 `cache/val_fixed`，checkpoint 写入 `checkpoints/rerun/`、结果写入 `results_rerun/`，不会覆盖最终结果（`checkpoints/final/`、`results_final/`）或修复前的记录。
+By default, the notebook does not regenerate embedding caches. It reads `cache/train_fixed` and `cache/val_fixed`, writes checkpoints to `checkpoints/rerun/`, and writes results to `results_rerun/`, so it does not overwrite final results (`checkpoints/final/`, `results_final/`) or historical pre-fix records.
 
-## 16. 最终报告的推荐顺序
+## 16. Recommended Structure for the Final Report
 
-报告应按照证据链组织，而不是逐个网络孤立汇报：
+The report should follow the evidence chain rather than describing each network in isolation:
 
-1. 项目目标：冻结编码器是否可以配合轻量 Reward Head 完成过程奖励建模；
-2. 数据概况：标签比例、轨迹长度、首错位置和位置偏差；
-3. 基线：majority、position-only、coin-flip；
-4. 训练过程：统一 30 epochs 上限、patience=5 早停和最佳 checkpoint；
-5. 总体表现：六个 head 的 held-out ROC-AUC、AP 和 ranking accuracy；
-6. 单步语义：Linear/MLP 是否超过位置基线；
-7. 上下文价值：CNN/BiGRU/Attention 是否超过 pointwise head；
-8. 能力来源：长度、首错位置和错误数量分层；
-9. 可解释行为：首错边界 reward drop 与正确边界对照；
-10. 结构敏感性：顺序与局部 mask 扰动；
-11. 因果前缀：去除未来信息后各 head 的性能变化；
-12. 剪枝价值：固定误剪预算下的检出、延迟和安全步骤节省；
-13. 效率：参数量、时间、显存和性能之间的权衡；
-14. 学习率网格：说明为什么固定 `lr` 下的架构结论不成立；
-15. Best-of-N：与 majority voting 和 oracle 对照；
-16. LoRA 对照：冻结前提的代价；
-17. 限制：每条都应附上量化它的那个实验，而不是笼统声明 ——
-    epoch 预算与容量交互（已用 30 轮验证，排名不变）、
-    lr 网格未探到下界、
-    LoRA 非算力对齐（1 轮 vs 30 轮，偏差对冻结侧有利）、
-    多数配置单种子（三头三种子验证过，区间不重叠）、
-    `max_length=512` 丢失约 9% 步骤（2048 重编码验证过，±0.009 AUC）、
-    离线步骤节省不等于真实加速。
+1. Project objective: can a frozen encoder plus a lightweight Reward Head perform process reward modeling?
+2. Data overview: label proportions, trajectory lengths, first-error positions, and positional bias.
+3. Baselines: majority, position-only, coin-flip.
+4. Training process: common 30-epoch cap, patience=5 early stopping, and best checkpoint selection.
+5. Overall performance: held-out ROC-AUC, AP, and ranking accuracy for all six heads.
+6. Single-step semantics: do Linear/MLP outperform the position baseline?
+7. Value of context: do CNN/BiGRU/Attention outperform pointwise heads?
+8. Source of capability: stratification by length, first-error position, and error count.
+9. Interpretable behavior: reward drop at the first-error boundary vs. correct-boundary control.
+10. Structural sensitivity: ordering and local-mask perturbations.
+11. Causal prefix: how much performance changes after removing future information.
+12. Pruning value: detection, delay, and safe step savings under a fixed false-pruning budget.
+13. Efficiency: trade-offs among parameter count, time, memory, and performance.
+14. Learning-rate grid: explain why architecture conclusions from a fixed `lr` are invalid.
+15. Best-of-N: compare against majority voting and oracle.
+16. LoRA comparison: quantify the cost of freezing the encoder.
+17. Limitations: each limitation should be paired with the experiment that quantifies it rather than stated vaguely:
+   - interaction between epoch budget and model capacity (checked at 30 epochs; ranking unchanged),
+   - learning-rate grid does not probe the lower bound,
+   - LoRA is not compute-matched (1 epoch vs. 30 epochs, favoring the frozen side),
+   - most configurations use one seed (three heads were checked with three seeds and their intervals did not overlap),
+   - `max_length=512` drops about 9% of steps (2048-length re-encoding changes AUC by ±0.009),
+   - offline step savings are not equivalent to real speedup.
 
-不要仅根据总体 Accuracy 宣称某种网络“理解了推理”。架构结论至少应同时得到以下证据支持：
+Do not claim that a network “understands reasoning” based only on overall Accuracy. An architecture conclusion should be supported by at least:
 
-- 超过确定性偏差基线；
-- held-out threshold-free 指标更好；
-- 对应分层样本上的优势；
-- 合理的首错边界行为；
-- 与网络结构一致的扰动敏感性；
-- 因果前缀下仍然有效的剪枝信号。
+- performance above deterministic bias baselines;
+- better held-out threshold-free metrics;
+- advantage on corresponding stratified subsets;
+- reasonable first-error-boundary behavior;
+- perturbation sensitivity consistent with the architecture;
+- pruning signal that remains effective under causal-prefix evaluation.
 
-## 17. 实验结束后的完整审计清单
+## 17. Complete Post-Experiment Audit Checklist
 
-### 17.1 代码检查
+### 17.1 Code Checks
 
 ```bash
 python -m unittest discover -v
 python -m py_compile *.py analysis/*.py eval/*.py tests/*.py
 ```
 
-### 17.2 配置一致性
+### 17.2 Configuration Consistency
 
-确认所有 head 使用：
+Confirm that all heads use:
 
-- 相同 train cache；
-- 相同 validation cache；
-- 相同 `seed=42`；
-- 相同 `split_seed=42`；
-- 相同 `calibration_fraction=0.5`；
-- 相同学习率和 PQM `zeta`；
-- 相同早停规则。
+- the same train cache;
+- the same validation cache;
+- the same `seed=42`;
+- the same `split_seed=42`;
+- the same `calibration_fraction=0.5`;
+- the same learning rate and PQM `zeta`;
+- the same early-stopping rule.
 
-### 17.3 防止数据泄漏
+### 17.3 Prevent Data Leakage
 
-确认：
+Confirm that:
 
-- early stopping 只使用 calibration/development 半区；
-- 阈值只在 calibration 半区选择；
-- 剪枝阈值只用 calibration 中的全正确轨迹校准；
-- test 半区没有参与模型、epoch 或阈值选择；
-- summary 中所有可比较模型使用相同 test 半区。
+- early stopping uses only the calibration/development half;
+- classification thresholds are selected only on the calibration half;
+- pruning thresholds are calibrated only on fully correct trajectories from the calibration split;
+- the test half is never used for model, epoch, or threshold selection;
+- every comparable model in the summary uses the same test half.
 
-### 17.4 必需输出
+### 17.4 Required Outputs
 
-至少保留：
+At minimum, retain:
 
 ```text
 checkpoints/*.pt
@@ -984,7 +1075,7 @@ results_final/data_bias.json
 results_final/deterministic_baselines.json
 results_final/behavior_by_group.csv
 results_final/first_error_boundary_curves.csv
-results_final/perturbation_results.csv             # 执行扰动时
+results_final/perturbation_results.csv             # when perturbations are run
 results_final/*_causal_predictions.pt
 results_final/*_pruning_metrics.json
 results_final/pruning_results.csv
@@ -992,26 +1083,23 @@ results_final/pruning_by_group.csv
 results_final/pruning_summary.md
 results_final/summary.csv
 results_final/summary.md
-results_final/step_metrics_ci.json                 # 主指标置信区间
-results_final/step_metrics_ci_pairwise.csv         # 配对差值与显著性
-results_final/causal_metrics_ci.json               # 因果前缀置信区间
-results_final/bon_results.csv                      # Best-of-N vs majority / oracle
-results_final/single_indist_metrics.csv            # 同分布 single-solution 对照
-results_final/lora_vs_frozen.json                  # LoRA 对照
+results_final/step_metrics_ci.json                  # confidence intervals for primary metrics
+results_final/step_metrics_ci_pairwise.csv          # paired differences and significance
+results_final/causal_metrics_ci.json                # causal-prefix confidence intervals
+results_final/bon_results.csv                       # Best-of-N vs. majority / oracle
+results_final/single_indist_metrics.csv             # in-distribution single-solution control
+results_final/lora_vs_frozen.json                   # LoRA comparison
 ```
 
-### 17.5 结论审计
+### 17.5 Conclusion Audit
 
-跑完不等于结论成立。交付前逐条核对：
+Finishing the runs does not automatically validate the conclusions. Before delivery, verify each of the following:
 
-1. **每个架构声明都有置信区间**，且区间不重叠或配对差值显著；
-2. **pointwise 头的因果前缀分数必须精确等于完整轨迹分数**（差值应在 1e-6 量级）。
-   若不为零，说明加载路径按 label 而非 `step_mask` 筛选了步骤 —— 这个 bug 曾使
-   因果落差被夸大 40%；
-3. **无位置编码的 attention 在 reverse / swap 扰动下 ΔAUC 必须精确为 0**
-   （它是置换等变的）。若不为零说明实现有误；
-4. **学习率不是固定的**，或若固定则已用网格证明该值合理；
-5. **Best-of-N 与 majority voting 对照过** —— 只报 step-level 指标不足以支撑部署结论；
-6. 上述 1–3 条已写成 `tests/test_core.py` 中的断言，`python -m unittest discover` 会检查。
+1. **Every architecture claim has a confidence interval**, with either non-overlapping intervals or a significant paired difference.
+2. **Pointwise-head causal-prefix scores must be exactly equal to full-trajectory scores** (difference should be on the order of `1e-6`). If not, the loading path is filtering steps by label rather than by `step_mask` — this bug previously inflated the causal drop by 40%.
+3. **Attention without positional encoding must have exactly ΔAUC = 0 under reverse / swap perturbations** because it is permutation equivariant. Any non-zero value indicates an implementation error.
+4. **The learning rate must not be blindly fixed**, or, if fixed, a grid must show that the chosen value is reasonable.
+5. **Best-of-N must be compared with majority voting** — step-level metrics alone are insufficient to support deployment conclusions.
+6. Checks 1–3 above are encoded as assertions in `tests/test_core.py`; `python -m unittest discover` verifies them.
 
-结果目录的用途见 `RESULTS_MAP.md`；最终数字取自 `results_final/`。
+See `RESULTS_MAP.md` for the purpose of each result directory. Final reported numbers should come from `results_final/`.

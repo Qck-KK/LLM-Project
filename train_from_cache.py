@@ -1,12 +1,3 @@
-"""
-train_from_cache.py
-=====================
-Trains a reward head using embeddings that were precomputed on another machine.
-
-Usage:
-    python train_from_cache.py --cache_dir cache/math_shepherd_qwen05b \
-        --head mlp --epochs 30 --lr 1e-4 --early_stopping_patience 5 --save_path checkpoints/mlp_head.pt
-"""
 
 import argparse
 import glob

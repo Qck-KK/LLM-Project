@@ -75,7 +75,6 @@ class ParserTests(unittest.TestCase):
 
 class MultipleComparisonTests(unittest.TestCase):
     def test_holm_matches_hand_computed_values(self):
-        # sorted: 0.005*4=0.02, 0.01*3=0.03, 0.03*2=0.06, 0.04*1=0.04 -> 0.06
         adjusted = holm_adjust([0.01, 0.04, 0.03, 0.005])
         for got, expected in zip(adjusted, [0.03, 0.06, 0.06, 0.02]):
             self.assertAlmostEqual(got, expected)

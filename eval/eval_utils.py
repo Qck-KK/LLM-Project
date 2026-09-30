@@ -20,7 +20,6 @@ def get_device(device=None):
 
 
 def load_step_cache_labels(cache_dir: str):
-    """Load and pad step labels/masks without loading cached embeddings."""
     paths = sorted(glob.glob(os.path.join(cache_dir, "shard_*.pt")))
     if not paths:
         raise FileNotFoundError(f"No cached shards in {cache_dir}")
@@ -47,7 +46,6 @@ def load_step_cache_labels(cache_dir: str):
 
 
 def deterministic_example_split(n_examples: int, calibration_fraction: float = 0.5, seed: int = 42):
-    """Return reproducible calibration/test example masks."""
     if n_examples < 2:
         raise ValueError("At least two examples are required for a calibration/test split.")
     if not 0.0 < calibration_fraction < 1.0:
@@ -88,7 +86,6 @@ def balanced_accuracy(scores: torch.Tensor, labels: torch.Tensor, threshold: flo
 
 
 def roc_auc(scores: torch.Tensor, labels: torch.Tensor) -> float:
-    """Rank-based ROC-AUC with average ranks for tied scores."""
     scores = scores.detach().float().cpu()
     labels = labels.detach().long().cpu()
     n_pos = int((labels == 1).sum())
@@ -131,7 +128,6 @@ def average_precision(scores: torch.Tensor, labels: torch.Tensor) -> float:
 
 
 def aggregate_trajectory_scores(q_values: torch.Tensor, step_mask: torch.Tensor, mode: str = "min") -> torch.Tensor:
-    """Collapse per-step Q-values into one score per trajectory."""
     squeeze = q_values.dim() == 1
     if squeeze:
         q_values = q_values.unsqueeze(0)

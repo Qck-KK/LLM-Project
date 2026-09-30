@@ -1,12 +1,3 @@
-"""
-precompute_embeddings.py
-=========================
-Runs the frozen encoder over a Math-Shepherd-style train/validation JSONL file
-and caches each batch as step_hidden, step_mask, and labels tensors.
-
-Run this once per split on the fastest available machine. The produced cache
-can then be copied to the training machine and consumed by train_from_cache.py.
-"""
 
 import argparse
 import functools

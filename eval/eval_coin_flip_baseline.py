@@ -1,11 +1,3 @@
-"""
-eval_coin_flip_baseline.py
-===========================
-Random baseline for the final comparison table.
-
-This baseline flips a fair coin to predict whether a step or trajectory is
-correct. It does not train a model and does not load any checkpoint.
-"""
 
 import argparse
 import glob

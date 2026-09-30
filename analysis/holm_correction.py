@@ -10,7 +10,6 @@ FAMILIES = ("all", "prefix", "suffix")
 
 
 def bootstrap_p_value(prob_a_better, n_samples, prob_a_worse=None):
-    """Two-sided p-value from the shares of resamples in which A beat / lost to B."""
     if prob_a_better != prob_a_better:  # NaN: no finite resample
         return float("nan")
     wins = round(prob_a_better * n_samples)
@@ -22,7 +21,6 @@ def bootstrap_p_value(prob_a_better, n_samples, prob_a_worse=None):
 
 
 def holm_adjust(p_values):
-    """Holm step-down adjusted p-values, returned in the input order."""
     indexed = [(p, i) for i, p in enumerate(p_values) if p == p]
     indexed.sort()
     m = len(indexed)
@@ -48,7 +46,6 @@ def in_family(row, family):
 
 
 def correct_pairwise_rows(rows, n_samples, alpha=0.05, family="all"):
-    """Add p-value, Holm-adjusted p-value and Holm significance per metric."""
     metrics = [c[: -len(PROB_SUFFIX)] for c in rows[0] if c.endswith(PROB_SUFFIX)]
     out = [dict(row) for row in rows]
     members = [i for i, row in enumerate(rows) if in_family(row, family)]

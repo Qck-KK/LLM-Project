@@ -1,15 +1,3 @@
-"""
-dataset.py
-===========
-Loads Math-Shepherd-style data and formats it for FrozenStepEncoder.
-
-Expected raw record (Math-Shepherd's public format, one JSON object per line):
-{
-  "question": "...",
-  "steps": ["Step 1 text", "Step 2 text", ...],
-  "labels": [1, 1, 0, 1, ...]   # 1 = step is correct, 0 = incorrect
-}
-"""
 
 import json
 
@@ -20,7 +8,6 @@ STEP_MARKER = "ки"
 
 
 def parse_math_shepherd(input_text, label_text, marker=STEP_MARKER):
-    """Split a raw Math-Shepherd record into (question, steps, labels)."""
     segments = input_text.split(marker)
     if len(segments) < 2:
         return None
@@ -103,10 +90,7 @@ class MathShepherdStepDataset(Dataset):
 
 
 def collate_fn(batch, tokenizer, max_length=2048):
-    """
-    Tokenizes a batch and pads the per-step labels to the same length the
-    encoder will produce step embeddings for.
-    """
+    
     texts = [item["text"] for item in batch]
     enc = tokenizer(
         texts,

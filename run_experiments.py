@@ -1,9 +1,4 @@
-"""Runs every cache-based experiment on the corrected Math-Shepherd caches.
 
-    python run_experiments.py                          # everything
-    python run_experiments.py --only main main_eval    # a subset
-    python run_experiments.py --dry_run                # print the commands
-"""
 
 import argparse
 import os
@@ -13,7 +8,7 @@ import sys
 
 TRAIN_CACHE = "cache/train_fixed"
 VAL_CACHE = "cache/val_fixed"
-BON_CACHE = "cache/single_eval"          # GSM8K candidates; unaffected by the parser fix
+BON_CACHE = "cache/single_eval"          
 FINAL_CKPT = "checkpoints/final"
 FINAL_OUT = "results_final"
 ABL_CKPT = "checkpoints/ablations"
@@ -33,7 +28,7 @@ SPLIT = ["--calibration_fraction", "0.5", "--split_seed", "42"]
 COMMON = ["--cache_dir", TRAIN_CACHE, "--val_cache_dir", VAL_CACHE,
           "--early_stopping_patience", "5", *SPLIT]
 PY = sys.executable
-ENCODER_PY = sys.executable  # overridden by --encoder_python for Qwen-running steps
+ENCODER_PY = sys.executable  
 LORA_CKPT = "checkpoints/ablations/lora"
 VAL_LORA_CACHE = "cache/val_lora_fixed"
 BON_LORA_CACHE = "cache/single_eval_lora_fixed"
@@ -103,7 +98,6 @@ def bon(checkpoint_dir, heads, results_dir):
 
 
 def main_eval_steps(out=None, ckpt=None, pattern="{head}_head.pt"):
-    """The full evaluation chain for six heads stored as ckpt/pattern."""
     out, ckpt = out or FINAL_OUT, ckpt or FINAL_CKPT
     pat = ["--checkpoint_pattern", pattern]
 
@@ -250,7 +244,6 @@ ROBUST_OUT = "results_final_lr3e-5"
 
 
 def copy_training_logs(lr, out):
-    """summarize_results reads the efficiency files from the results directory."""
     os.makedirs(out, exist_ok=True)
     for head in ALL_HEADS:
         source = os.path.join(ABL_OUT, "train", "{0}_lr{1}".format(head, lr))

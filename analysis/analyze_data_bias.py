@@ -1,8 +1,4 @@
-"""Analyze label/position bias and deterministic no-model baselines.
 
-This script reads only labels and masks from a validation cache. It does not
-load an encoder, a reward-head checkpoint, or train a model.
-"""
 
 import argparse
 import csv

@@ -1,19 +1,3 @@
-"""
-eval_step_metrics.py
-======================
-Held-out step-level evaluation for a trained reward head:
-    - calibrated step accuracy and balanced accuracy
-    - threshold-free ROC-AUC and average precision
-    - within-trajectory Q-value ranking accuracy
-
-Metrics are computed from cached validation embeddings and a trained head's
-weights. The split is by trajectory: one half calibrates the classification
-threshold and the other half is used for the reported metrics.
-
-Usage:
-    python -m eval.eval_step_metrics --cache_dir cache/qwen05b_val \
-        --head mlp --checkpoint checkpoints/mlp_head.pt
-"""
 
 import argparse
 import glob
@@ -38,10 +22,7 @@ from reward_heads import build_reward_head
 
 @torch.no_grad()
 def qvalue_ranking_accuracy(all_q, all_labels):
-    """
-    Pairwise ranking accuracy WITHIN each trajectory: for every (correct step,
-    incorrect step) pair in the same example, check if Q(correct) > Q(incorrect).
-    """
+    
     total, correct_pairs = 0, 0
     B, S = all_labels.shape
     for b in range(B):

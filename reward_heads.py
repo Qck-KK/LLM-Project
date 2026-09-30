@@ -1,17 +1,3 @@
-"""
-reward_heads.py
-================
-Stage 2: Lightweight Reward Function Approximators.
-
-Every head has the SAME interface so they are drop-in swappable:
-
-    forward(step_hidden: (B, S, H), step_mask: (B, S) bool) -> q_values: (B, S)
-
-step_hidden comes straight out of FrozenStepEncoder. Padded positions in
-step_mask are ignored by the loss (see pqm_loss.py), but heads that mix
-information ACROSS steps (CNN / GRU / Attention) must also respect the mask
-internally so padding doesn't leak into real steps.
-"""
 
 import math
 
@@ -19,9 +5,7 @@ import torch
 import torch.nn as nn
 
 
-# ---------------------------------------------------------------------------
-# Baseline: Linear reward head (original PRM-style head)
-# ---------------------------------------------------------------------------
+
 class LinearHead(nn.Module):
     def __init__(self, hidden_size: int):
         super().__init__()
@@ -32,9 +16,7 @@ class LinearHead(nn.Module):
         return q
 
 
-# ---------------------------------------------------------------------------
-# MLP: nonlinear pointwise reward approximation
-# ---------------------------------------------------------------------------
+
 class MLPHead(nn.Module):
     def __init__(self, hidden_size: int, mlp_hidden: int = 256, dropout: float = 0.1):
         super().__init__()
@@ -51,9 +33,7 @@ class MLPHead(nn.Module):
         return self.net(step_hidden).squeeze(-1)
 
 
-# ---------------------------------------------------------------------------
-# CNN: local structural patterns among consecutive steps (1D conv over steps)
-# ---------------------------------------------------------------------------
+
 class CNNHead(nn.Module):
     def __init__(self, hidden_size: int, channels: int = 128, kernel_size: int = 3):
         super().__init__()
@@ -67,18 +47,16 @@ class CNNHead(nn.Module):
         # zero out padded steps before convolving so they don't pollute
         # neighboring real steps via the receptive field
         x = step_hidden * step_mask.unsqueeze(-1)
-        x = x.transpose(1, 2)          # (B, H, S)
+        x = x.transpose(1, 2)     # (B, H, S)
         x = self.act(self.conv1(x))
         x = x * step_mask.unsqueeze(1)
         x = self.act(self.conv2(x))
         x = x * step_mask.unsqueeze(1)
-        x = x.transpose(1, 2)          # (B, S, channels)
+        x = x.transpose(1, 2)    # (B, S, channels)
         return self.out(x).squeeze(-1)
 
 
-# ---------------------------------------------------------------------------
-# GRU / BiGRU: explicit sequential dependency modeling between steps
-# ---------------------------------------------------------------------------
+
 class GRUHead(nn.Module):
     def __init__(self, hidden_size: int, gru_hidden: int = 128, bidirectional: bool = True):
         super().__init__()
@@ -104,9 +82,7 @@ class GRUHead(nn.Module):
         return self.out(out).squeeze(-1)
 
 
-# ---------------------------------------------------------------------------
-# Attention Pooling: global trajectory-level interactions between all steps
-# ---------------------------------------------------------------------------
+
 class AttentionPoolingHead(nn.Module):
     def __init__(self, hidden_size: int, n_heads: int = 4, dropout: float = 0.1):
         super().__init__()
@@ -137,11 +113,8 @@ class AttentionPoolingHead(nn.Module):
         return self.out(x).squeeze(-1)
 
 
-# ---------------------------------------------------------------------------
-# Attention + sinusoidal positions: the same head, told where each step sits
-# ---------------------------------------------------------------------------
+
 class AttentionPoolingPositionHead(AttentionPoolingHead):
-    """AttentionPoolingHead with sinusoidal positional encoding on the steps."""
 
     def _positional_encoding(self, n_steps, hidden_size, device, dtype):
         position = torch.arange(n_steps, device=device, dtype=torch.float32).unsqueeze(1)
@@ -161,9 +134,6 @@ class AttentionPoolingPositionHead(AttentionPoolingHead):
         return super().forward(step_hidden, step_mask)
 
 
-# ---------------------------------------------------------------------------
-# Factory
-# ---------------------------------------------------------------------------
 REWARD_HEADS = {
     "linear": LinearHead,
     "mlp": MLPHead,

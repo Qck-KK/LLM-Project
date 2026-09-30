@@ -28,7 +28,6 @@ def pad_and_concat(tensors, value):
 
 @torch.no_grad()
 def score_cache(head, shard_paths, device, agg):
-    """One trajectory score per cached candidate, in cache order."""
     head.eval()
     scores = []
     for path in shard_paths:
@@ -50,7 +49,6 @@ def percentile_ci(samples, alpha=0.05):
 
 
 def majority_choice(preds, subset):
-    """Index within `subset` of the most common non-empty answer (ties: first)."""
     counts = collections.Counter(preds[i] for i in subset if preds[i] not in ("", None))
     if not counts:
         return subset[0]
@@ -62,7 +60,6 @@ def majority_choice(preds, subset):
 
 
 def weighted_vote_choice(preds, weights, subset):
-    """Index within `subset` of a candidate carrying the heaviest answer."""
     totals = {}
     for i in subset:
         if preds[i] not in ("", None):
@@ -141,7 +138,6 @@ def main():
         subsets[k] = per_question
 
     def evaluate(pick_fn):
-        """Per-question accuracy, averaged over that question's subsets."""
         out = {}
         for k in args.ks:
             per_question = torch.zeros(n_questions)

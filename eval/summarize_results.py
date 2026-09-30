@@ -1,18 +1,4 @@
-"""
-summarize_results.py
-======================
-Scans a results directory for the JSON files produced by:
-    - train_from_cache.py   (--results_dir ...)  -> {head}_efficiency.json
-    - eval_step_metrics.py   (--results_dir ...)  -> {head}_step_metrics.json
-    - eval_single_from_cache.py (--results_dir ...) -> {head}_single_metrics.json
-    - analyze_head_behavior.py -> {head}_behavior_metrics.json
-    - analyze_offline_pruning.py -> {head}_pruning_metrics.json
-    - analyze_data_bias.py -> deterministic_baselines.json
 
-Usage:
-    python -m eval.summarize_results --results_dir results/ \
-        --out_csv results/summary.csv --out_md results/summary.md
-"""
 
 import argparse
 import glob
@@ -138,7 +124,6 @@ def main():
             row[k] = bon.get(k, "")
         rows.append(row)
 
-    # ---- CSV ----
     csv_path = args.out_csv or os.path.join(args.results_dir, "summary.csv")
     with open(csv_path, "w") as f:
         f.write(",".join(columns) + "\n")
@@ -146,7 +131,6 @@ def main():
             f.write(",".join(_fmt(row[c]) for c in columns) + "\n")
     print(f"[saved] {csv_path}")
 
-    # ---- Markdown ----
     md_path = args.out_md or os.path.join(args.results_dir, "summary.md")
     with open(md_path, "w") as f:
         f.write("| " + " | ".join(columns) + " |\n")
@@ -155,7 +139,6 @@ def main():
             f.write("| " + " | ".join(_fmt(row[c]) for c in columns) + " |\n")
     print(f"[saved] {md_path}")
 
-    # ---- also print to stdout ----
     print("\n" + open(md_path).read())
 
 

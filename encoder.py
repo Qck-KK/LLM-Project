@@ -1,15 +1,4 @@
-"""
-encoder.py
-============
-Stage 1: Frozen Semantic Encoder.
 
-We wrap a small math-oriented LM (default: Qwen2.5-0.5B) and freeze ALL of its
-parameters. It is used purely as a feature extractor.
-
-Each reasoning step is terminated with a special step marker token. After a
-forward pass, we gather the hidden state at every marker position and treat
-those vectors as per-step representations.
-"""
 
 import torch
 import torch.nn as nn

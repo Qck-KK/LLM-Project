@@ -1,8 +1,3 @@
-"""
-benchmark.py
-=============
-Measures throughput on the current machine before a full precompute run.
-"""
 
 import argparse
 import time

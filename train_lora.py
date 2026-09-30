@@ -1,4 +1,3 @@
-"""LoRA fine-tuning of the step encoder, as the control for the frozen-encoder premise."""
 
 import argparse
 import json
@@ -43,7 +42,6 @@ def build_model(model_name, step_token, lora_r, lora_alpha, lora_dropout, device
 
 
 def gather_step_states(hidden, input_ids, step_token_id):
-    """One vector per step marker, padded to the batch's longest step count."""
     is_step = input_ids.eq(step_token_id)
     counts = is_step.sum(dim=1)
     max_steps = max(int(counts.max().item()), 1)
@@ -59,7 +57,6 @@ def gather_step_states(hidden, input_ids, step_token_id):
 
 
 def align_labels(labels, step_mask):
-    """collate_fn already trims labels to surviving markers; pad/crop to match."""
     n_steps = step_mask.shape[1]
     if labels.shape[1] < n_steps:
         labels = torch.nn.functional.pad(

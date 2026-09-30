@@ -27,7 +27,6 @@ def pad_and_concat(tensors, value):
 
 @torch.no_grad()
 def score(cache_dir, head_name, checkpoint, device):
-    """Return (scores, labels, step_mask) for one arm, padded to its own width."""
     shard_paths = sorted(glob.glob(os.path.join(cache_dir, "shard_*.pt")))
     assert shard_paths, "No cached shards in " + cache_dir
     with open(os.path.join(cache_dir, "hidden_size.txt")) as f:
